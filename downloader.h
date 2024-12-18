@@ -20,6 +20,12 @@ extern uint32** DNS_LIST;
 char* download_file(char* url);
 
 
+typedef struct parsedUrl {
+	char* protocol;
+	char* hostname;
+	char* rest;
+} parsedUrl;
+
 
 /* 
 	url: the url to normalize. this is used internally, and is only exported for testing
@@ -29,7 +35,7 @@ char* download_file(char* url);
 
 	THE CALLER MUST FREE THE NORMALIZED URL!
 */
-char* trim_URL(char* url);
+parsedUrl parse_URL(char* url);
 
 /*included_downloader_h*/
 #endif
