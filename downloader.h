@@ -19,5 +19,17 @@ extern uint32** DNS_LIST;
 */
 char* download_file(char* url);
 
+
+
+/* 
+	url: the url to normalize. this is used internally, and is only exported for testing
+
+	returns a normalized url from the url (example: turning https://pubs.opengroup.org/onlinepubs/007904975/basedefs/sys/socket.h.html to pubs.opengroup.org
+	this is just a char* srting or NULL if there was an error
+
+	THE CALLER MUST FREE THE NORMALIZED URL!
+*/
+char* trim_URL(char* url);
+
 /*included_downloader_h*/
 #endif
