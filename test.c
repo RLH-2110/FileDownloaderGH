@@ -1,7 +1,7 @@
 #include "downloader.h"
 #include <stdio.h>
-#include <memory.h>
 #include <string.h>
+#include <stdlib.h>
 
 #ifndef NULL
 #define NULL (void*)0
@@ -15,6 +15,15 @@ int compare(char* a, char* b) {
 	if (a == 0 || b == 0)
 		return 0xff;
 	return strcmp(a, b);
+}
+
+/* gets a sting, if its NULl it retuns "NULL", if its empty it returns "(EMPTY)" if its neither, it returns the given string*/
+char* got(char* str){
+	if (str == NULL)
+		return "NULL";
+	if (str[0] == 0)
+		return "(EMPTY)";
+	return str;
 }
 
 int main(){
@@ -113,26 +122,27 @@ int main(){
 	};
 
 	parsedUrl result;
+	int i;
 
-	for (int i = 0; i < numTests;i++) {
+	for (i = 0; i < numTests;i++) {
 		result = parse_URL(testUrls[i]);
 
 		if (compare(result.hostname, expectedHostname[i]) != 0) {
-			printf("url test 1A failed\n");
+			printf("url test %dA (hostname) failed\nexpected: %s\ngot: %s\n",i,got(expectedHostname[i]),got(result.hostname));
 			return 1;
 		}
 		else { printf("url test %dA passed\n",i); }
 
 		/* test 1B */
 		if (compare(result.protocol, expectedProtocol[i]) != 0) {
-			printf("url test %dB failed\n",i);
+			printf("url test %dB (protocol) failed\nexpected: %s\ngot: %s\n",i,got(expectedProtocol[i]),got(result.protocol));
 			return 1;
 		}
 		else { printf("url test %dB passed\n",i); }
 
 		/* test 1C */
 		if (compare(result.rest, expectedRest[i]) != 0) {
-			printf("url test %dC failed\n",i);
+			printf("url test %dC (rest) failed\nexpected: %s\ngot: %s\n",i,got(expectedRest[i]),got(result.rest));
 			return 1;
 		}
 		else { printf("url test %dC passed\n",i); }
