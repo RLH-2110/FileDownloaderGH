@@ -1,7 +1,7 @@
 #include "downloader.h"
 #include <stdio.h>
-#include <memory.h>
 #include <string.h>
+#include <stdlib.h>
 
 #ifndef NULL
 #define NULL (void*)0
@@ -17,125 +17,138 @@ int compare(char* a, char* b) {
 	return strcmp(a, b);
 }
 
+/* gets a sting, if its NULl it retuns "NULL", if its empty it returns "(EMPTY)" if its neither, it returns the given string*/
+char* got(char* str){
+	if (str == NULL)
+		return "NULL";
+	if (str[0] == 0)
+		return "(EMPTY)";
+	return str;
+}
+
 int main(){
 
-	#define numTests 20
-	char* testUrls[numTests] = {
-		"https://www.github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt", /* 00 */
+	#define num_parse_URL_Tests 20
+	char* testUrls[num_parse_URL_Tests] = {
+		"https://www.github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt", /* 01 */
 		"https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
 		"www.github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
 		"github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
-		"https://www.github.com", 
-		"https://github.com", /* 05 */
+		"https://www.github.com",  /* 05 */
+		"https://github.com",
 		"www.github.com",
 		"github.com",
 		NULL,
-		"()()",
-		"..", /* 10 */
+		"()()", /* 10 */
+		"..", 
 		".",
 		"abn.. / ",
 		"https://abc.deg.hij..lhagas.asgdsag/test",
-		"abc.deg.hij.lhagas.asgdsag",
-		"https://abc.deg.hij.lhagas.asgdsag/test", /* 15 */
+		"abc.deg.hij.lhagas.asgdsag", /* 15 */
+		"https://abc.deg.hij.lhagas.asgdsag/test", 
 		"abc.deg.hij.lhagas.asgdsag/test",
 		"https://abc.deg.hij.lhagas.asgdsag",
 		"http://www.github.com",
-		"ftp://www.github.com"
+		"ftp://www.github.com" /* 20 */
 	};
 
-	char* expectedHostname[numTests] = {
-		"www.github.com", /* 00 */
+	char* expectedHostname[num_parse_URL_Tests] = {
+		"www.github.com", /* 01 */
 		"www.github.com",
 		"www.github.com",
 		"www.github.com",
-		"www.github.com",
-		"www.github.com", /* 05 */
+		"www.github.com",/* 05 */
+		"www.github.com", 
 		"www.github.com",
 		"www.github.com",
 		NULL,
+		NULL,/* 10 */
+		NULL, 
 		NULL,
-		NULL, /* 10 */
 		NULL,
 		NULL,
-		NULL,
+		"abc.deg.hij.lhagas.asgdsag",/* 15 */
+		"abc.deg.hij.lhagas.asgdsag", 
 		"abc.deg.hij.lhagas.asgdsag",
-		"abc.deg.hij.lhagas.asgdsag", /* 15 */
-		"abc.deg.hij.lhagas.asgdsag",
 		"abc.deg.hij.lhagas.asgdsag",
 		"www.github.com",
-		"www.github.com"
+		"www.github.com" /* 20 */
 	};
 
-	char* expectedProtocol[numTests] = {
-		"https", /* 00 */
+	char* expectedProtocol[num_parse_URL_Tests] = {
+		"https", /* 01 */
 		"https",
 		"https",
 		"https",
+		"https",  /* 05 */
 		"https",
-		"https", /* 05 */
 		"https",
 		"https",
 		NULL,
+		NULL,/* 10 */
+		NULL, 
 		NULL,
-		NULL, /* 10 */
 		NULL,
 		NULL,
-		NULL,
-		"https",
 		"https", /* 15 */
+		"https", 
 		"https",
 		"https",
 		"http",
-		"ftp"
+		"ftp" /* 20 */
 	};
 
-	char* expectedRest[numTests] = {
-		"/RLH-2110/FileDownloaderGH/blob/master/sample.txt", /* 00 */
+	char* expectedRest[num_parse_URL_Tests] = {
+		"/RLH-2110/FileDownloaderGH/blob/master/sample.txt", /* 01 */
 		"/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
 		"/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
 		"/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
-		"",
 		"", /* 05 */
+		"", 
 		"",
 		"",
 		NULL,
-		NULL,
-		NULL, /* 10 */
-		NULL,
+		NULL,  /* 10 */
 		NULL,
 		NULL,
-		"",
-		"/test", /* 15 */
+		NULL,
+		NULL,
+		"", /* 15 */
+		"/test", 
 		"/test",
 		"",
 		"",
-		""
+		"" /* 20 */
 	};
 
 	parsedUrl result;
+	int i;
 
-	for (int i = 0; i < numTests;i++) {
+	for (i = 0; i < num_parse_URL_Tests;i++) {
 		result = parse_URL(testUrls[i]);
 
 		if (compare(result.hostname, expectedHostname[i]) != 0) {
-			printf("url test 1A failed\n");
+			printf("parse_URL test %dA (hostname) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedHostname[i]),got(result.hostname));
+			printf("test passed (%d out of %d)\n", i + 1, num_parse_URL_Tests);
 			return 1;
 		}
-		else { printf("url test %dA passed\n",i); }
+		else { printf("parse_URL test %dA passed\n",i+1); }
 
 		/* test 1B */
 		if (compare(result.protocol, expectedProtocol[i]) != 0) {
-			printf("url test %dB failed\n",i);
+			printf("parse_URL test %dB (protocol) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedProtocol[i]),got(result.protocol));
+			printf("test passed (%d out of %d)\n", i + 1, num_parse_URL_Tests);
 			return 1;
 		}
-		else { printf("url test %dB passed\n",i); }
+		else { printf("parse_URL test %dB passed\n",i+1); }
 
 		/* test 1C */
 		if (compare(result.rest, expectedRest[i]) != 0) {
-			printf("url test %dC failed\n",i);
+			printf("parse_URL test %dC (rest) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedRest[i]),got(result.rest));
+			printf("test passed (%d out of %d)\n", i+1, num_parse_URL_Tests);
 			return 1;
 		}
-		else { printf("url test %dC passed\n",i); }
+		else { printf("parse_URL test %dC passed\n",i+1); }
 
 		free(result.protocol);
 		free(result.hostname);
@@ -143,6 +156,7 @@ int main(){
 
 	}
 
+	printf("parse_URL tests passed (%d out of %d)\n", i,num_parse_URL_Tests);
 
 	/*if (download_file("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt") != NULL){
 		puts("calling download_file without initalizing the DNS_LIST should return NULL!");

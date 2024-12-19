@@ -32,8 +32,9 @@ enum trimState {
 */
 parsedUrl parse_URL(char* url) {
 
-	parsedUrl parsed = { .protocol = NULL, .hostname = NULL, .rest = NULL };
-	
+	parsedUrl parsed;
+	parsedUrl returnNull;
+
 	char* normalized_url = NULL;
 	char* rest = NULL;
 	char* protocol = NULL;
@@ -45,8 +46,12 @@ parsedUrl parse_URL(char* url) {
 	int state = TS_findDot;
 	currentIndex = 0;
 
+	returnNull.protocol = NULL;
+	returnNull.hostname = NULL;
+	returnNull.rest = NULL;
+
 	if (url == NULL)
-		return parsed; /* filled with NULL */
+		return returnNull; /* filled with NULL */
 
 
 	while (state != TS_exit) {
@@ -57,7 +62,7 @@ parsedUrl parse_URL(char* url) {
 		case TS_findDot:
 		{
 			if (url[currentIndex] == 0)
-				return parsed; /* filled with NULL */
+				return returnNull; /* filled with NULL */
 
 			if (url[currentIndex] != '.') {
 				currentIndex++;
@@ -77,7 +82,7 @@ parsedUrl parse_URL(char* url) {
 		case TS_trimStart:
 		{
 			if (currentIndex < 0)
-				return parsed; /* filled with NULL */
+				return returnNull; /* filled with NULL */
 
 			if (currentIndex == 0)
 				goto TS_trimStart_nextSate;
@@ -103,7 +108,7 @@ parsedUrl parse_URL(char* url) {
 			if (url[currentIndex] == '.') {
 				dots++;
 				if (foundDot == true)
-					return parsed; /* filled with NULL */ /* invalid url when 2 dots are next to each other. */
+					return returnNull; /* filled with NULL */ /* invalid url when 2 dots are next to each other. */
 				foundDot = true;
 				
 				currentIndex++;
@@ -127,7 +132,7 @@ parsedUrl parse_URL(char* url) {
 		case TS_fillStruct:
 		{
 
-			//fix subdomain
+			/*fix subdomain*/
 
 			/* +2 because index is always one smaller, and we need a null byte*/
 #define normalizedMallocSsize endIndex + 2 - startIndex 
@@ -135,7 +140,7 @@ parsedUrl parse_URL(char* url) {
 
 				normalized_url = malloc(normalizedMallocSsize);
 				if (normalized_url == NULL)
-					return (parsedUrl) { NULL, NULL, NULL };
+					return returnNull;
 
 				memcpy(normalized_url, url + startIndex, normalizedMallocSsize);
 				normalized_url[normalizedMallocSsize - 1] = 0;
@@ -147,7 +152,7 @@ parsedUrl parse_URL(char* url) {
 
 				normalized_url = malloc(normalizedMallocSsize + 4); /* +4 because we need to add www. */
 				if (normalized_url == NULL)
-					return (parsedUrl) { NULL, NULL, NULL };
+					return returnNull;
 
 				memcpy(normalized_url+4, url + startIndex, normalizedMallocSsize); /* +4 because www. is missing*/
 				normalized_url[0] = 'w';
@@ -160,28 +165,29 @@ parsedUrl parse_URL(char* url) {
 
 			}
 
-			//fix protocol
+			/* fix protocol */
 			if (startIndex - 3 > 0) {
 				protocol = malloc(startIndex - 3 + 1);
 				if (protocol == NULL)
-					return (parsedUrl) { NULL, NULL, NULL };
+					return returnNull;
 
 				memcpy(protocol, url, startIndex - 3);
 				protocol[startIndex - 3] = 0;
 			}
 			else {
-				// allocated, so we can just free it, instead of worring what happends if we free memory that we never allocated
+				/* allocated, so we can just free it, instead of worring what happends if we free memory that we never allocated*/
 				protocol = malloc(6);
 				if (protocol == NULL)
-					return (parsedUrl) { NULL, NULL, NULL };
+					return returnNull;
 				protocol[0] = 'h'; protocol[1] = 't'; protocol[2] = 't'; protocol[3] = 'p'; protocol[4] = 's'; protocol[5] = 0;
 
 			}
 
 			rest = malloc(strlen(url) + 1 - endIndex);
 			if (rest == NULL)
-				return (parsedUrl) { NULL, NULL, NULL };
+				return returnNull;
 			memcpy(rest, url + endIndex + 1, strlen(url) + 1 - endIndex);
+			//rest[strlen(url)- endIndex] = 0;
 
 			parsed.protocol = protocol;
 			parsed.hostname = normalized_url;
