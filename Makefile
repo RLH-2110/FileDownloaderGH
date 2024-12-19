@@ -3,8 +3,17 @@ includes =
 files = main.c
 output = downloader.lib
 
+# OS FLAGS
+ifeq ($(OS),Windows_NT)
+    OSFLAG = -D WINDOWS
+$(info    detected windows)
+else
+	OSFLAG = -D POSIX
+$(info    assuming posix)
+endif
+
 all:
-	$(gcc) $(files) $(includes) -c -o $(output)
+	$(gcc) $(files) $(includes) -c -o $(output) $(OSFLAG)
 	$(gcc) test.c $(output) -o test.o
 	
 
