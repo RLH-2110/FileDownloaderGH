@@ -19,7 +19,7 @@ int compare(char* a, char* b) {
 
 int main(){
 
-	#define numTests 18
+	#define numTests 20
 	char* testUrls[numTests] = {
 		"https://www.github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt", /* 00 */
 		"https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
@@ -38,7 +38,9 @@ int main(){
 		"abc.deg.hij.lhagas.asgdsag",
 		"https://abc.deg.hij.lhagas.asgdsag/test", /* 15 */
 		"abc.deg.hij.lhagas.asgdsag/test",
-		"https://abc.deg.hij.lhagas.asgdsag"
+		"https://abc.deg.hij.lhagas.asgdsag",
+		"http://www.github.com",
+		"ftp://www.github.com"
 	};
 
 	char* expectedHostname[numTests] = {
@@ -59,7 +61,9 @@ int main(){
 		"abc.deg.hij.lhagas.asgdsag",
 		"abc.deg.hij.lhagas.asgdsag", /* 15 */
 		"abc.deg.hij.lhagas.asgdsag",
-		"abc.deg.hij.lhagas.asgdsag"
+		"abc.deg.hij.lhagas.asgdsag",
+		"www.github.com",
+		"www.github.com"
 	};
 
 	char* expectedProtocol[numTests] = {
@@ -80,7 +84,9 @@ int main(){
 		"https",
 		"https", /* 15 */
 		"https",
-		"https"
+		"https",
+		"http",
+		"ftp"
 	};
 
 	char* expectedRest[numTests] = {
@@ -101,6 +107,8 @@ int main(){
 		"",
 		"/test", /* 15 */
 		"/test",
+		"",
+		"",
 		""
 	};
 
