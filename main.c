@@ -187,7 +187,7 @@ parsedUrl parse_URL(char* url) {
 			if (rest == NULL)
 				return returnNull;
 			memcpy(rest, url + endIndex + 1, strlen(url) + 1 - endIndex);
-			rest[strlen(url)- endIndex] = 0;
+			//rest[strlen(url)- endIndex] = 0;
 
 			parsed.protocol = protocol;
 			parsed.hostname = normalized_url;
