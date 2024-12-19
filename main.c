@@ -16,25 +16,27 @@ enum trimState {
 	TS_findDot,
 	TS_trimStart,
 	TS_findEnd,
-	TS_fixSubdomain,
+	TS_fillStruct,
 	TS_exit
 };
 
 /*
-	url: the url to normalize
+	url: the VALID url to parse. this will not fix broken urls
+	do not use leading or tailing dots
 
-	TODO UPDATE THIS
+	returns an struct that turns the url into 3 parts. 
+		for example this url: https://pubs.opengroup.org/onlinepubs/007904975/basedefs/sys/socket.h.html would be split into https   ,   pubs.opengroup.org     and     /onlinepubs/007904975/basedefs/sys/socket.h.html
+	it will return an array filled with NULL if there was an errror.
 
-	returns a normalized url from the url (example: turning https://pubs.opengroup.org/onlinepubs/007904975/basedefs/sys/socket.h.html to pubs.opengroup.org
-	this is just a char* srting or NULL if there was an error
-
-	THE CALLER MUST FREE THE NORMALIZED URL!
+	THE CALLER MUST FREE THE EVERY STRING IN THE STUCT!!!!
 */
 parsedUrl parse_URL(char* url) {
 
 	parsedUrl parsed = { .protocol = NULL, .hostname = NULL, .rest = NULL };
 	
 	char* normalized_url = NULL;
+	char* rest = NULL;
+	char* protocol = NULL;
 
 	int dotIndex, currentIndex, endIndex, startIndex;
 	int dots = 0;
@@ -112,7 +114,7 @@ parsedUrl parse_URL(char* url) {
 				currentIndex--;
 			TS_findEnd_nextSate:
 				endIndex = currentIndex;
-				state = TS_fixSubdomain;
+				state = TS_fillStruct;
 				currentIndex = dotIndex;
 				break;
 			}
@@ -122,23 +124,31 @@ parsedUrl parse_URL(char* url) {
 			break;
 		}
 
-		case TS_fixSubdomain:
+		case TS_fillStruct:
 		{
+
+			//fix subdomain
+
 			/* +2 because index is always one smaller, and we need a null byte*/
 #define normalizedMallocSsize endIndex + 2 - startIndex 
 			if (dots >= 2) {
 
 				normalized_url = malloc(normalizedMallocSsize);
+				if (normalized_url == NULL)
+					return (parsedUrl) { NULL, NULL, NULL };
+
 				memcpy(normalized_url, url + startIndex, normalizedMallocSsize);
 				normalized_url[normalizedMallocSsize - 1] = 0;
 
-				state = TS_exit;
-				break;
+
 
 			}
 			else {
 
-				normalized_url = malloc(normalizedMallocSsize + 3); /* +4 because we need to add www. */
+				normalized_url = malloc(normalizedMallocSsize + 4); /* +4 because we need to add www. */
+				if (normalized_url == NULL)
+					return (parsedUrl) { NULL, NULL, NULL };
+
 				memcpy(normalized_url+4, url + startIndex, normalizedMallocSsize); /* +4 because www. is missing*/
 				normalized_url[0] = 'w';
 				normalized_url[1] = 'w';
@@ -146,10 +156,39 @@ parsedUrl parse_URL(char* url) {
 				normalized_url[3] = '.';
 				normalized_url[normalizedMallocSsize + 4 - 1] = 0;
 
-				state = TS_exit;
-				break;
+				
 
 			}
+
+			//fix protocol
+			if (startIndex - 3 > 0) {
+				protocol = malloc(startIndex - 3 + 1);
+				if (protocol == NULL)
+					return (parsedUrl) { NULL, NULL, NULL };
+
+				memcpy(protocol, url, startIndex - 3);
+				protocol[startIndex - 3] = 0;
+			}
+			else {
+				// allocated, so we can just free it, instead of worring what happends if we free memory that we never allocated
+				protocol = malloc(6);
+				if (protocol == NULL)
+					return (parsedUrl) { NULL, NULL, NULL };
+				protocol[0] = 'h'; protocol[1] = 't'; protocol[2] = 't'; protocol[3] = 'p'; protocol[4] = 's'; protocol[5] = 0;
+
+			}
+
+			rest = malloc(strlen(url) + 1 - endIndex);
+			if (rest == NULL)
+				return (parsedUrl) { NULL, NULL, NULL };
+			memcpy(rest, url + endIndex + 1, strlen(url) + 1 - endIndex);
+
+			parsed.protocol = protocol;
+			parsed.hostname = normalized_url;
+			parsed.rest = rest;
+
+			state = TS_exit;
+			break;
 		}
 
 
@@ -158,8 +197,7 @@ parsedUrl parse_URL(char* url) {
 
 
 	}
-
-	parsed.hostname = normalized_url; /* todo: make finish*/
+ /* todo: make finish*/
 	return parsed;
 
 }

@@ -8,144 +8,133 @@
 #endif
 
 
-/* strcmp, but return 0xff if one of the strings is a NULL pointer*/
-int strcmpp(char* a, char* b) {
+/* zero if equal, non zero if not equal.*/
+int compare(char* a, char* b) {
+	if (a == 0 && b == 0)
+		return 0;
 	if (a == 0 || b == 0)
 		return 0xff;
-	else return strcmp(a, b);
+	return strcmp(a, b);
 }
 
 int main(){
 
-	/* test 1 */
-	if (strcmpp(parse_URL("https://www.github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt").hostname,"www.github.com") != 0 ){
-		puts("url test 1 failed");
-		return 1;
+	#define numTests 18
+	char* testUrls[numTests] = {
+		"https://www.github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt", /* 00 */
+		"https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
+		"www.github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
+		"github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
+		"https://www.github.com", 
+		"https://github.com", /* 05 */
+		"www.github.com",
+		"github.com",
+		NULL,
+		"()()",
+		"..", /* 10 */
+		".",
+		"abn.. / ",
+		"https://abc.deg.hij..lhagas.asgdsag/test",
+		"abc.deg.hij.lhagas.asgdsag",
+		"https://abc.deg.hij.lhagas.asgdsag/test", /* 15 */
+		"abc.deg.hij.lhagas.asgdsag/test",
+		"https://abc.deg.hij.lhagas.asgdsag"
+	};
+
+	char* expectedHostname[numTests] = {
+		"www.github.com", /* 00 */
+		"www.github.com",
+		"www.github.com",
+		"www.github.com",
+		"www.github.com",
+		"www.github.com", /* 05 */
+		"www.github.com",
+		"www.github.com",
+		NULL,
+		NULL,
+		NULL, /* 10 */
+		NULL,
+		NULL,
+		NULL,
+		"abc.deg.hij.lhagas.asgdsag",
+		"abc.deg.hij.lhagas.asgdsag", /* 15 */
+		"abc.deg.hij.lhagas.asgdsag",
+		"abc.deg.hij.lhagas.asgdsag"
+	};
+
+	char* expectedProtocol[numTests] = {
+		"https", /* 00 */
+		"https",
+		"https",
+		"https",
+		"https",
+		"https", /* 05 */
+		"https",
+		"https",
+		NULL,
+		NULL,
+		NULL, /* 10 */
+		NULL,
+		NULL,
+		NULL,
+		"https",
+		"https", /* 15 */
+		"https",
+		"https"
+	};
+
+	char* expectedRest[numTests] = {
+		"/RLH-2110/FileDownloaderGH/blob/master/sample.txt", /* 00 */
+		"/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
+		"/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
+		"/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
+		"",
+		"", /* 05 */
+		"",
+		"",
+		NULL,
+		NULL,
+		NULL, /* 10 */
+		NULL,
+		NULL,
+		NULL,
+		"",
+		"/test", /* 15 */
+		"/test",
+		""
+	};
+
+	parsedUrl result;
+
+	for (int i = 0; i < numTests;i++) {
+		result = parse_URL(testUrls[i]);
+
+		if (compare(result.hostname, expectedHostname[i]) != 0) {
+			printf("url test 1A failed\n");
+			return 1;
+		}
+		else { printf("url test %dA passed\n",i); }
+
+		/* test 1B */
+		if (compare(result.protocol, expectedProtocol[i]) != 0) {
+			printf("url test %dB failed\n",i);
+			return 1;
+		}
+		else { printf("url test %dB passed\n",i); }
+
+		/* test 1C */
+		if (compare(result.rest, expectedRest[i]) != 0) {
+			printf("url test %dC failed\n",i);
+			return 1;
+		}
+		else { printf("url test %dC passed\n",i); }
+
+		free(result.protocol);
+		free(result.hostname);
+		free(result.rest);
+
 	}
-	else { puts("url test 1 passed"); }
 
-	/* test 2 */
-	if (strcmpp(parse_URL("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt").hostname, "www.github.com") != 0 ){
-		puts("url test 2 failed");
-		return 1;
-	}
-	else { puts("url test 2 passed"); }
-
-	/* test 3*/
-	if (strcmpp(parse_URL("www.github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt").hostname, "www.github.com") != 0 ){
-		puts("url test 3 failed");
-		return 1;
-	}
-	else { puts("url test 3 passed"); }
-
-	/* test 4 */
-	if (strcmpp(parse_URL("github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt").hostname,"www.github.com") != 0 ){
-		puts("url test 4 failed");
-		return 1;
-	}
-	else { puts("url test 4 passed"); }
-
-	/* test 5 */
-	if (strcmpp(parse_URL("https://www.github.com").hostname, "www.github.com") != 0 ){
-		puts("url test 5 failed");
-		return 1;
-	}
-	else { puts("url test 5 passed"); }
-
-	/* test 6 */
-	if (strcmpp(parse_URL("https://github.com").hostname, "www.github.com") != 0 ){
-		puts("url test 6 failed");
-		return 1;
-	}
-	else { puts("url test 6 passed"); }
-
-	/* test 7 */
-	if (strcmpp(parse_URL("www.github.com").hostname,"www.github.com") != 0 ){
-		puts("url test 7 failed");
-		return 1;
-	}
-	else { puts("url test 7 passed"); }
-
-	/* test 8 */
-	if (strcmpp(parse_URL("github.com").hostname, "www.github.com") != 0 ){
-		puts("url test 8 failed");
-		return 1;
-	}
-	else { puts("url test 8 passed"); }
-
-	/* test invalid urls*/
-
-	/* test 9 */
-	if (parse_URL(NULL).hostname != NULL ){
-		puts("url test 9 failed");
-		return 1;
-	}
-	else { puts("url test 9 passed"); }
-
-	/* test 10 */
-	if (parse_URL("()()").hostname != NULL ){
-		puts("url test 10 failed");
-		return 1;
-	}
-	else { puts("url test 10 passed"); }
-
-	/* test 11 */
-	if (parse_URL("..").hostname != NULL ){
-		puts("url test 11 failed");
-		return 1;
-	}
-	else { puts("url test 11 passed"); }
-
-	/* test 12 */
-	if (parse_URL(".").hostname != NULL ){
-		puts("url test 12 failed");
-		return 1;
-	}
-	else { puts("url test 12 passed"); }
-
-	/* test 13 */
-	if (parse_URL("abn../").hostname != NULL ){
-		puts("url test 13 failed");
-		return 1;
-	}
-	else { puts("url test 13 passed"); }
-
-	/* test 14 */
-	if (parse_URL("https://abc.deg.hij..lhagas.asgdsag/test").hostname != NULL) {
-		puts("url test 14 failed");
-		return 1;
-	}
-	else { puts("url test 14 passed"); }
-
-	// valid multiple subdomains
-
-	/* test 15 */
-	if (strcmpp(parse_URL("abc.deg.hij.lhagas.asgdsag").hostname, "abc.deg.hij.lhagas.asgdsag") != 0) {
-		puts("url test 15 failed");
-		return 1;
-	}
-	else { puts("url test 15 passed"); }
-
-	/* test 16 */
-	if (strcmpp(parse_URL("https://abc.deg.hij.lhagas.asgdsag/test").hostname, "abc.deg.hij.lhagas.asgdsag") != 0) {
-		puts("url test 16 failed");
-		return 1;
-	}
-	else { puts("url test 16 passed"); }
-
-	/* test 17 */
-	if (strcmpp(parse_URL("abc.deg.hij.lhagas.asgdsag/test").hostname, "abc.deg.hij.lhagas.asgdsag") != 0) {
-		puts("url test 17 failed");
-		return 1;
-	}
-	else { puts("url test 17 passed"); }
-
-	/* test 18 */
-	if (strcmpp(parse_URL("https://abc.deg.hij.lhagas.asgdsag").hostname, "abc.deg.hij.lhagas.asgdsag") != 0) {
-		puts("url test 18 failed");
-		return 1;
-	}
-	else { puts("url test 18 passed"); }
 
 	/*if (download_file("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt") != NULL){
 		puts("calling download_file without initalizing the DNS_LIST should return NULL!");
