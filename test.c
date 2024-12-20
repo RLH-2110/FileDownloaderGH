@@ -132,12 +132,19 @@ int main(){
 		"ABC.DEF.GHI.JKL.asg-gasdg.sd.d.hsdhsdh.g"
 	};
 
+
+	const char ecpectedQname0[] = {3, 'w', 'w', 'w', 6, 'g', 'i', 't', 'h', 'u', 'b', 3, 'c', 'o', 'm', 0};
+	const char ecpectedQname1[] = { 6, 'g', 'i', 't', 'h', 'u', 'b', 0 };
+	const char ecpectedQname2[] = { 0 };
+		
+	const char ecpectedQname4[] = { 3, 'A', 'B', 'C', 3, 'D', 'E', 'F', 3, 'G', 'H', 'I', 3, 'J', 'K', 'L', 9, 'a', 's', 'g', '-', 'g', 'a', 's', 'd', 'g', 2, 's', 'd', 1, 'd', 7, 'h', 's', 'd', 'h', 's', 'd', 'h', 1, 'g', 0 };
+
 	char* expectedQNAME[num_QNAME_Tests] = {
-		"3www6github3com0",
-		"6github0",
-		"0",
+		ecpectedQname0,
+		ecpectedQname1,
+		ecpectedQname2,
 		NULL,
-		"3ABC3DEF3GHI3JKL9asg-gasdg2sd1d7hsdhsdh1g"
+		ecpectedQname4
 	};
 
 

@@ -232,7 +232,7 @@ char* getQNAME(char* hostname){
 	length = 0;
 	qname_current = qname + 1;
 	qname_lentgh = qname;
-	section_curr = 0;
+	section_curr = hostname;
 
 	while(*section_curr != 0){
 
