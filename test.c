@@ -121,7 +121,29 @@ int main(){
 		"" /* 20 */
 	};
 
+
+	#define num_QNAME_Tests 5
+
+	char* testHostnames[num_QNAME_Tests] = {
+		"www.github.com",
+		"github",
+		"",
+		"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"ABC.DEF.GHI.JKL.asg-gasdg.sd.d.hsdhsdh.g"
+	};
+
+	char* expectedQNAME[num_QNAME_Tests] = {
+		"3www6github3com0",
+		"6github0",
+		"0",
+		NULL,
+		"3ABC3DEF3GHI3JKL9asg-gasdg2sd1d7hsdhsdh1g"
+	};
+
+
+
 	parsedUrl result;
+	char* sresult;
 	int i;
 
 	for (i = 0; i < num_parse_URL_Tests;i++) {
@@ -157,6 +179,31 @@ int main(){
 	}
 
 	printf("parse_URL tests passed (%d out of %d)\n", i,num_parse_URL_Tests);
+
+
+
+
+
+	/* getQNAME(); */
+
+
+	for (i = 0; i < num_QNAME_Tests;i++) {
+		sresult = getQNAME(testHostnames[i]);
+
+		if (compare(sresult, expectedQNAME[i]) != 0) {
+			printf("getQNAME test %d failed\nexpected: %s\ngot: %s\n",i+1,got(expectedQNAME[i]),got(sresult));
+			printf("test passed (%d out of %d)\n", i + 1, num_QNAME_Tests);
+			return 1;
+		}
+		else { printf("getQNAME test %d passed\n",i+1); }
+
+		free(sresult);
+	}
+
+	printf("getQNAME tests passed (%d out of %d)\n", i,num_QNAME_Tests);
+
+
+
 
 	/*if (download_file("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt") != NULL){
 		puts("calling download_file without initalizing the DNS_LIST should return NULL!");
