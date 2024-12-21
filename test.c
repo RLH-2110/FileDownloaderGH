@@ -7,6 +7,12 @@
 #define NULL (void*)0
 #endif
 
+#define mallocOrExit(ptr,size) \
+	ptr = malloc(size); \
+	if (ptr == NULL){ \
+		puts("Out of mem!");\
+		exit(EXIT_FAILURE);\
+	}
 
 /* zero if equal, non zero if not equal.*/
 int compare(char* a, char* b) {
@@ -24,6 +30,60 @@ char* got(char* str){
 	if (str[0] == 0)
 		return "(EMPTY)";
 	return str;
+}
+
+/* transform a qname to a more pritnable format.
+	returns the qname, but the length values are written in ascii
+	you are epected to free the pointer!
+*/
+char* debug_print_qname(char* qname) {
+
+	char* result;
+	int state = 0;
+	unsigned char length;
+	char* buff;
+	int i;
+
+	char* resultp;
+
+	if (qname == NULL) {
+		mallocOrExit(result, 5);
+		strcpy(result, "NULL");
+		return result;
+	}
+	if (*qname == 0) {
+		mallocOrExit(result, 1);
+		strcpy(result, "");
+		return result;
+	}
+
+	mallocOrExit(result, strlen(qname) * 3);
+	resultp = result;
+	mallocOrExit(buff, 4);
+
+	while (*qname != 0) {
+	
+		switch (state)
+		{
+			case 0:
+				length = *qname;
+				snprintf(buff, 4, "%d", length);
+
+				for (i = 0;i < strlen(buff);i++)
+					*resultp++ = buff[i];
+			
+				state = 1;
+				break;
+			case 1:
+				*resultp = *qname;
+				resultp++;
+				if (--length == 0)
+					state = 0;
+		}
+		qname++;
+	}
+	*resultp = 0;
+	return result;
 }
 
 int main(){
@@ -122,6 +182,8 @@ int main(){
 	};
 
 
+
+
 	#define num_QNAME_Tests 5
 
 	char* testHostnames[num_QNAME_Tests] = {
@@ -132,11 +194,10 @@ int main(){
 		"ABC.DEF.GHI.JKL.asg-gasdg.sd.d.hsdhsdh.g"
 	};
 
-
 	const char ecpectedQname0[] = {3, 'w', 'w', 'w', 6, 'g', 'i', 't', 'h', 'u', 'b', 3, 'c', 'o', 'm', 0};
 	const char ecpectedQname1[] = { 6, 'g', 'i', 't', 'h', 'u', 'b', 0 };
 	const char ecpectedQname2[] = { 0 };
-		
+	/* NULL */
 	const char ecpectedQname4[] = { 3, 'A', 'B', 'C', 3, 'D', 'E', 'F', 3, 'G', 'H', 'I', 3, 'J', 'K', 'L', 9, 'a', 's', 'g', '-', 'g', 'a', 's', 'd', 'g', 2, 's', 'd', 1, 'd', 7, 'h', 's', 'd', 'h', 's', 'd', 'h', 1, 'g', 0 };
 
 	char* expectedQNAME[num_QNAME_Tests] = {
@@ -149,9 +210,14 @@ int main(){
 
 
 
+
+
 	parsedUrl result;
 	char* sresult;
 	int i;
+	char* str1;
+	char* str2;
+
 
 	for (i = 0; i < num_parse_URL_Tests;i++) {
 		result = parse_URL(testUrls[i]);
@@ -159,7 +225,7 @@ int main(){
 		if (compare(result.hostname, expectedHostname[i]) != 0) {
 			printf("parse_URL test %dA (hostname) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedHostname[i]),got(result.hostname));
 			printf("test passed (%d out of %d)\n", i + 1, num_parse_URL_Tests);
-			return 1;
+			return EXIT_FAILURE;
 		}
 		else { printf("parse_URL test %dA passed\n",i+1); }
 
@@ -167,7 +233,7 @@ int main(){
 		if (compare(result.protocol, expectedProtocol[i]) != 0) {
 			printf("parse_URL test %dB (protocol) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedProtocol[i]),got(result.protocol));
 			printf("test passed (%d out of %d)\n", i + 1, num_parse_URL_Tests);
-			return 1;
+			return EXIT_FAILURE;
 		}
 		else { printf("parse_URL test %dB passed\n",i+1); }
 
@@ -175,7 +241,7 @@ int main(){
 		if (compare(result.rest, expectedRest[i]) != 0) {
 			printf("parse_URL test %dC (rest) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedRest[i]),got(result.rest));
 			printf("test passed (%d out of %d)\n", i+1, num_parse_URL_Tests);
-			return 1;
+			return EXIT_FAILURE;
 		}
 		else { printf("parse_URL test %dC passed\n",i+1); }
 
@@ -190,17 +256,17 @@ int main(){
 
 
 
-
 	/* getQNAME(); */
-
-
 	for (i = 0; i < num_QNAME_Tests;i++) {
 		sresult = getQNAME(testHostnames[i]);
 
 		if (compare(sresult, expectedQNAME[i]) != 0) {
-			printf("getQNAME test %d failed\nexpected: %s\ngot: %s\n",i+1,got(expectedQNAME[i]),got(sresult));
+			str1 = debug_print_qname(expectedQNAME[i]);
+			str2 = debug_print_qname(sresult);
+			printf("getQNAME test %d failed\nexpected: %s\ngot: %s\n",i+1, str1,str2);
 			printf("test passed (%d out of %d)\n", i + 1, num_QNAME_Tests);
-			return 1;
+			free(str1);	free(str2);
+			return EXIT_FAILURE;
 		}
 		else { printf("getQNAME test %d passed\n",i+1); }
 

@@ -253,8 +253,9 @@ char* getQNAME(char* hostname){
 		qname_current++;
 		section_curr++;
 	}
+	*qname_lentgh = length; /* write the lentgh of the last section*/
 
-	qname[strlen(hostname)+2] = 0;
+	*qname_current = 0;
 	return qname;
 }
 
