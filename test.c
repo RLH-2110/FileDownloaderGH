@@ -7,7 +7,6 @@
 #define NULL (void*)0
 #endif
 
-
 /* zero if equal, non zero if not equal.*/
 int compare(char* a, char* b) {
 	if (a == 0 && b == 0)
@@ -121,8 +120,43 @@ int main(){
 		"" /* 20 */
 	};
 
+
+
+
+	#define num_QNAME_Tests 5
+
+	char* testHostnames[num_QNAME_Tests] = {
+		"www.github.com",
+		"github",
+		"",
+		"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"ABC.DEF.GHI.JKL.asg-gasdg.sd.d.hsdhsdh.g"
+	};
+
+	const char ecpectedQname0[] = {3, 'w', 'w', 'w', 6, 'g', 'i', 't', 'h', 'u', 'b', 3, 'c', 'o', 'm', 0};
+	const char ecpectedQname1[] = { 6, 'g', 'i', 't', 'h', 'u', 'b', 0 };
+	const char ecpectedQname2[] = { 0 };
+	/* NULL */
+	const char ecpectedQname4[] = { 3, 'A', 'B', 'C', 3, 'D', 'E', 'F', 3, 'G', 'H', 'I', 3, 'J', 'K', 'L', 9, 'a', 's', 'g', '-', 'g', 'a', 's', 'd', 'g', 2, 's', 'd', 1, 'd', 7, 'h', 's', 'd', 'h', 's', 'd', 'h', 1, 'g', 0 };
+
+	char* expectedQNAME[num_QNAME_Tests] = {
+		ecpectedQname0,
+		ecpectedQname1,
+		ecpectedQname2,
+		NULL,
+		ecpectedQname4
+	};
+
+
+
+
+
 	parsedUrl result;
+	char* sresult;
 	int i;
+	char* str1;
+	char* str2;
+
 
 	for (i = 0; i < num_parse_URL_Tests;i++) {
 		result = parse_URL(testUrls[i]);
@@ -130,7 +164,7 @@ int main(){
 		if (compare(result.hostname, expectedHostname[i]) != 0) {
 			printf("parse_URL test %dA (hostname) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedHostname[i]),got(result.hostname));
 			printf("test passed (%d out of %d)\n", i + 1, num_parse_URL_Tests);
-			return 1;
+			return EXIT_FAILURE;
 		}
 		else { printf("parse_URL test %dA passed\n",i+1); }
 
@@ -138,7 +172,7 @@ int main(){
 		if (compare(result.protocol, expectedProtocol[i]) != 0) {
 			printf("parse_URL test %dB (protocol) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedProtocol[i]),got(result.protocol));
 			printf("test passed (%d out of %d)\n", i + 1, num_parse_URL_Tests);
-			return 1;
+			return EXIT_FAILURE;
 		}
 		else { printf("parse_URL test %dB passed\n",i+1); }
 
@@ -146,7 +180,7 @@ int main(){
 		if (compare(result.rest, expectedRest[i]) != 0) {
 			printf("parse_URL test %dC (rest) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedRest[i]),got(result.rest));
 			printf("test passed (%d out of %d)\n", i+1, num_parse_URL_Tests);
-			return 1;
+			return EXIT_FAILURE;
 		}
 		else { printf("parse_URL test %dC passed\n",i+1); }
 
@@ -157,6 +191,31 @@ int main(){
 	}
 
 	printf("parse_URL tests passed (%d out of %d)\n", i,num_parse_URL_Tests);
+
+
+
+
+	/* getQNAME(); */
+	for (i = 0; i < num_QNAME_Tests;i++) {
+		sresult = getQNAME(testHostnames[i]);
+
+		if (compare(sresult, expectedQNAME[i]) != 0) {
+			str1 = debug_print_qname(expectedQNAME[i]);
+			str2 = debug_print_qname(sresult);
+			printf("getQNAME test %d failed\nexpected: %s\ngot: %s\n",i+1, str1,str2);
+			printf("test passed (%d out of %d)\n", i + 1, num_QNAME_Tests);
+			free(str1);	free(str2);
+			return EXIT_FAILURE;
+		}
+		else { printf("getQNAME test %d passed\n",i+1); }
+
+		free(sresult);
+	}
+
+	printf("getQNAME tests passed (%d out of %d)\n", i,num_QNAME_Tests);
+
+
+
 
 	/*if (download_file("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt") != NULL){
 		puts("calling download_file without initalizing the DNS_LIST should return NULL!");

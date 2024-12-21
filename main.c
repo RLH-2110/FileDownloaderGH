@@ -1,6 +1,8 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "downloader.h"
+#include "int.h"
 
 #ifndef NULL
 #define NULL (void*)0
@@ -187,7 +189,7 @@ parsedUrl parse_URL(char* url) {
 			if (rest == NULL)
 				return returnNull;
 			memcpy(rest, url + endIndex + 1, strlen(url) + 1 - endIndex);
-			//rest[strlen(url)- endIndex] = 0;
+			rest[strlen(url)- endIndex] = 0;
 
 			parsed.protocol = protocol;
 			parsed.hostname = normalized_url;
@@ -209,8 +211,173 @@ parsedUrl parse_URL(char* url) {
 }
 
 
-char* generate_DNS_restuest(char* normalized_url) {
-	return NULL;
+/* 
+	gets the QNAME from a hostname
+
+	returns a QNAME as a string (\0 terminated)
+	IMPORTANT: the actuall qname is 0x30 '0' terminated, we have that terminator, but we added a \0 so we can get the total length with the strlen function.
+*/
+char* getQNAME(char* hostname){
+
+	char* qname;
+
+	uint8 length ;
+	char* section_curr;
+	char* qname_current;
+	char* qname_lentgh;
+
+	qname = malloc(strlen(hostname)+2); /* the "dots" will be replaced by numbers. ie. www.google.de -> 3www6google2de0  for the first and last one we have to add 2 bytes. */
+	if (qname == NULL)
+		return NULL;
+
+	length = 0;
+	qname_current = qname + 1;
+	qname_lentgh = qname;
+	section_curr = hostname;
+
+	while(*section_curr != 0){
+
+		if (*section_curr == '.'){
+
+			*qname_lentgh = length; /* write the lentgh before we start the text section*/
+			length = 0; /* restet length */
+			qname_lentgh = qname_current; /* our current position is the dot, that will be the next index where we write the lentgh*/
+
+		}else{
+			length++;
+			if (length == 0) /* overflow happened - BAD */
+				return NULL; 
+
+			*qname_current = *section_curr; /* copy the data */
+		}
+
+		qname_current++;
+		section_curr++;
+	}
+	*qname_lentgh = length; /* write the lentgh of the last section*/
+
+	*qname_current = 0;
+	return qname;
+}
+
+char* debug_print_qname(char* qname) {
+
+	char* result;
+	int state = 0;
+	unsigned char length;
+	char* buff;
+	int i;
+
+	char* resultp;
+
+	if (qname == NULL) {
+		mallocOrExit(result, 5);
+		strcpy(result, "NULL");
+		return result;
+	}
+	if (*qname == 0) {
+		mallocOrExit(result, 1);
+		strcpy(result, "");
+		return result;
+	}
+
+	mallocOrExit(result, strlen(qname) * 3);
+	resultp = result;
+	mallocOrExit(buff, 4);
+
+	while (*qname != 0) {
+
+		switch (state)
+		{
+		case 0:
+			length = *qname;
+			snprintf(buff, 4, "%d", length);
+
+			for (i = 0;i < strlen(buff);i++)
+				*resultp++ = buff[i];
+
+			state = 1;
+			break;
+		case 1:
+			*resultp = *qname;
+			resultp++;
+			if (--length == 0)
+				state = 0;
+		}
+		qname++;
+	}
+	*resultp = 0;
+	return result;
+}
+
+#define DNS_HEADER_SIZE 12
+#define DNS_QUESTION_SIZE_ADJ 0
+#define RQEUEST_SIZE DNS_HEADER_SIZE + DNS_QUESTION_SIZE_ADJ
+
+/* https://mislove.org/teaching/cs4700/spring11/handouts/project1-primer.pdf */
+/* takes in a hostname and returns the DNS reqeust to resolve the hostname
+
+	returns: byte array with the dns request (CALLER MUST FREE IT!)
+*/
+char* generate_DNS_restuest(char* hostname, uint16 id) {
+
+	char* request = malloc(RQEUEST_SIZE + strlen(hostname) + 1); /* add the lentgh of the hostname, since that is dynamic */
+	if (request == NULL)
+		return NULL;
+
+
+	/*  /------------\
+		| DNS HEADER |
+	    \------------/  */
+
+	/* https://mislove.org/teaching/cs4700/spring11/handouts/project1-primer.pdf */
+	#define DNS_QR 0
+	#define DNS_OPCODE 0 
+	#define DNS_AA 0 
+	#define DNS_TC 0
+	#define DNS_RD 1
+	#define DNS_RA 0
+	#define DNS_Z  0
+	#define DNS_RCODE 0
+
+	#define DNS_FLAGS DNS_RCODE | (DNS_Z << 4) | (DNS_RA << 7) | (DNS_RD << 8) | (DNS_TC << 9) | (DNS_AA << 10) | (DNS_OPCODE << 11) | (DNS_QR << 15)
+
+	/* id */
+	request[0] = (uint8)(id >> 8); /* load upper half of the id */
+	request[1] = (uint8)id;		   /* load lowe half of the id  */
+	
+	/* flags */
+	request[2] = (uint8)(DNS_FLAGS >> 8);
+	request[3] = (uint8)(DNS_FLAGS);
+
+	/* QD count */
+	request[4] = 0;
+	request[5] = 1;
+
+	/* AN count */
+	request[6] = 0;
+	request[7] = 0;
+
+	/* MS count */
+	request[8] = 0;
+	request[9] = 0;
+
+	/* AR count */
+	request[10] = 0;
+	request[11] = 0;
+
+
+	/*  /--------------\
+		| DNS QUESTION |
+	    \--------------/  */
+
+
+
+	/* TODO */
+
+
+	request[RQEUEST_SIZE] = 0; /* null terminated, so we cant print this thing as a string if we wish. */
+	return request;
 }
 
 
