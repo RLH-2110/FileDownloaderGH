@@ -56,7 +56,7 @@ parsedUrl parse_URL(char* url);
 
 	returns: byte array with the dns request (CALLER MUST FREE IT!)
 */
-char* generate_DNS_restuest(char* hostname, uint16 id);
+char* generate_DNS_request(char* hostname, uint16 id);
 
 
 
@@ -80,7 +80,10 @@ char* getQNAME(char* hostname);
 		exit(EXIT_FAILURE);\
 	}
 
-/* transform a qname to a more pritnable format for debugging
+/* transform a qname to a more pritnable format for debugging.
+ 
+	WARNING: THIS FUNCTON WILL QUITE THE PROGAMM IN AN OUT OF MEMORY SCENARIO!
+
 	returns the qname, but the length values are written in ascii
 	you are epected to free the pointer!
 */
