@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "downloader.h"
 #include "int.h"
@@ -259,6 +260,55 @@ char* getQNAME(char* hostname){
 	return qname;
 }
 
+char* debug_print_qname(char* qname) {
+
+	char* result;
+	int state = 0;
+	unsigned char length;
+	char* buff;
+	int i;
+
+	char* resultp;
+
+	if (qname == NULL) {
+		mallocOrExit(result, 5);
+		strcpy(result, "NULL");
+		return result;
+	}
+	if (*qname == 0) {
+		mallocOrExit(result, 1);
+		strcpy(result, "");
+		return result;
+	}
+
+	mallocOrExit(result, strlen(qname) * 3);
+	resultp = result;
+	mallocOrExit(buff, 4);
+
+	while (*qname != 0) {
+
+		switch (state)
+		{
+		case 0:
+			length = *qname;
+			snprintf(buff, 4, "%d", length);
+
+			for (i = 0;i < strlen(buff);i++)
+				*resultp++ = buff[i];
+
+			state = 1;
+			break;
+		case 1:
+			*resultp = *qname;
+			resultp++;
+			if (--length == 0)
+				state = 0;
+		}
+		qname++;
+	}
+	*resultp = 0;
+	return result;
+}
 
 #define DNS_HEADER_SIZE 12
 #define DNS_QUESTION_SIZE_ADJ 0

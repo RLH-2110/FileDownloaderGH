@@ -7,13 +7,6 @@
 #define NULL (void*)0
 #endif
 
-#define mallocOrExit(ptr,size) \
-	ptr = malloc(size); \
-	if (ptr == NULL){ \
-		puts("Out of mem!");\
-		exit(EXIT_FAILURE);\
-	}
-
 /* zero if equal, non zero if not equal.*/
 int compare(char* a, char* b) {
 	if (a == 0 && b == 0)
@@ -30,60 +23,6 @@ char* got(char* str){
 	if (str[0] == 0)
 		return "(EMPTY)";
 	return str;
-}
-
-/* transform a qname to a more pritnable format.
-	returns the qname, but the length values are written in ascii
-	you are epected to free the pointer!
-*/
-char* debug_print_qname(char* qname) {
-
-	char* result;
-	int state = 0;
-	unsigned char length;
-	char* buff;
-	int i;
-
-	char* resultp;
-
-	if (qname == NULL) {
-		mallocOrExit(result, 5);
-		strcpy(result, "NULL");
-		return result;
-	}
-	if (*qname == 0) {
-		mallocOrExit(result, 1);
-		strcpy(result, "");
-		return result;
-	}
-
-	mallocOrExit(result, strlen(qname) * 3);
-	resultp = result;
-	mallocOrExit(buff, 4);
-
-	while (*qname != 0) {
-	
-		switch (state)
-		{
-			case 0:
-				length = *qname;
-				snprintf(buff, 4, "%d", length);
-
-				for (i = 0;i < strlen(buff);i++)
-					*resultp++ = buff[i];
-			
-				state = 1;
-				break;
-			case 1:
-				*resultp = *qname;
-				resultp++;
-				if (--length == 0)
-					state = 0;
-		}
-		qname++;
-	}
-	*resultp = 0;
-	return result;
 }
 
 int main(){

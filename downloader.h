@@ -73,5 +73,18 @@ char* generate_DNS_restuest(char* hostname, uint16 id);
 */
 char* getQNAME(char* hostname);
 
+#define mallocOrExit(ptr,size) \
+	ptr = malloc(size); \
+	if (ptr == NULL){ \
+		puts("Out of mem!");\
+		exit(EXIT_FAILURE);\
+	}
+
+/* transform a qname to a more pritnable format for debugging
+	returns the qname, but the length values are written in ascii
+	you are epected to free the pointer!
+*/
+char* debug_print_qname(char* qname);
+
 /*included_downloader_h*/
 #endif
