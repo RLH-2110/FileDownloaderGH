@@ -285,7 +285,7 @@ char* debug_get_printable_qname(char* qname) {
 		{
 		case 0:
 			length = *qname;
-			snprintf(buff, 4, "%d", length);
+			sprintf(buff, "%d", length);
 
 			for (i = 0;i < strlen(buff);i++)
 				*resultp++ = buff[i];
@@ -433,12 +433,12 @@ char* debug_get_printable_DNS_request(char* request) {
 		return result;
 	}
 	
-	id		= request[0] << 8 + request[1];
-	flags	= request[2] << 8 + request[3];
-	qdcount	= request[4] << 8 + request[5];
-	ancount	= request[6] << 8 + request[7];
-	nscount	= request[8] << 8 + request[9];
-	arcount	= request[10] << 8 + request[11];
+	id		= (request[0] << 8) + request[1];
+	flags	= (request[2] << 8) + request[3];
+	qdcount	= (request[4] << 8) + request[5];
+	ancount	= (request[6] << 8) + request[7];
+	nscount	= (request[8] << 8) + request[9];
+	arcount	= (request[10]<< 8) + request[11];
 
 	request_index = reqIndexSTART;
 	qname = debug_get_printable_qname(request+request_index);
@@ -448,10 +448,10 @@ char* debug_get_printable_DNS_request(char* request) {
 	}
 	request_index++; /*now move past the NULL terminator*/
 
-	qtype = request[request_index+0] << 8 + request[request_index+1];
-	qclass = request[request_index+2] << 8 + request[request_index+3];
+	qtype = (request[request_index+0] << 8) + request[request_index+1];
+	qclass = (request[request_index+2] << 8) + request[request_index+3];
 
-	request_index += 3; // save the offset where the request ends.
+	request_index += 3; /* save the offset where the request ends. */
 
 	result = malloc(strlen(qname) + strlen(longest_printable_DNS_request_with_empty_QNAME) + 5); /* string lenght of longest request with empty qname, lengh of qname and 5 exta buffer */
 
@@ -497,19 +497,19 @@ int compare_DNS_requests(char* requestA, char* requestB) {
 		index++;
 	}
 
-	// compare the QNAME
+	/* compare the QNAME */
 	while (requestA[index] != 0 && requestB[index] != 0) {
 		if (requestA[index] != requestB[index])
 			return 0;
 		index++;
 	}
 
-	// check if both QNAMEs terminate
+	/* check if both QNAMEs terminate */
 	if (requestA[index] != requestB[index])
 		return 0;
 	index++;
 
-	// check the last 4 bytes
+	/* check the last 4 bytes */
 	if (requestA[index+0] != requestB[index+0])
 		return 0;
 	if (requestA[index+1] != requestB[index+1])
