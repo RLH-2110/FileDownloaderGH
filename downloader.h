@@ -67,8 +67,7 @@ char* generate_DNS_request(char* hostname, uint16 id);
 
 	NOTE: THE HOSTNAME MUST BE IN A VALID FORMAT! FOR EXAMPLE: MULTIPLE DOTS AFTER EACH OTHER CAUSE UNDEFINED BEHAVIOR!
 
-	returns a QNAME as a string (\0 terminated)
-	IMPORTANT: the actuall qname is 0x30 '0' terminated, we have that terminator, but we added a \0 so we can get the total length with the strlen function.
+	returns a QNAME (functions simelar to a string)
 	MUST BE FREED BY THE CALLER!
 */
 char* getQNAME(char* hostname);
@@ -80,14 +79,30 @@ char* getQNAME(char* hostname);
 		exit(EXIT_FAILURE);\
 	}
 
-/* transform a qname to a more pritnable format for debugging.
+/* transform a qname to a more printable format for debugging.
  
-	WARNING: THIS FUNCTON WILL QUITE THE PROGAMM IN AN OUT OF MEMORY SCENARIO!
+	WARNING: THIS FUNCTON WILL QUIT THE PROGAMM IN AN OUT OF MEMORY SCENARIO!
 
 	returns the qname, but the length values are written in ascii
 	you are epected to free the pointer!
 */
-char* debug_print_qname(char* qname);
+char* debug_get_printable_qname(char* qname);
+
+
+/* print out the DNS request for debugging.
+
+	WARNING: THIS FUNCTON WILL QUIT THE PROGAMM IN AN OUT OF MEMORY SCENARIO!
+
+	returns the qname, but the length values are written in ascii
+	you are epected to free the pointer!
+*/
+char* debug_get_printable_DNS_request(char* request);
+
+/* comprased two DNS requests
+	returns 0 if they are not equal.
+	returns a non zero value if they are the same.
+*/
+int compare_DNS_requests(char* requestA, char* requestB);
 
 /*included_downloader_h*/
 #endif

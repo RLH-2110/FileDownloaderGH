@@ -11,7 +11,7 @@
 #ifndef true
 typedef int bool;
 #define true 0xFF
-#define false 0X0
+#define false 0x0
 #endif
 
 enum trimState {
@@ -206,8 +206,10 @@ parsedUrl parse_URL(char* url) {
 /* 
 	gets the QNAME from a hostname
 
-	returns a QNAME as a string (\0 terminated)
-	IMPORTANT: the actuall qname is 0x30 '0' terminated, we have that terminator, but we added a \0 so we can get the total length with the strlen function.
+	returns a QNAME
+	caller frees
+
+	more detail in the header
 */
 char* getQNAME(char* hostname){
 
@@ -252,7 +254,7 @@ char* getQNAME(char* hostname){
 	return qname;
 }
 
-char* debug_print_qname(char* qname) {
+char* debug_get_printable_qname(char* qname) {
 
 	char* result;
 	int state = 0;
@@ -303,7 +305,7 @@ char* debug_print_qname(char* qname) {
 }
 
 #define DNS_HEADER_SIZE 12
-#define DNS_QUESTION_SIZE_ADJ 0
+#define DNS_QUESTION_SIZE_ADJ 4
 #define RQEUEST_SIZE DNS_HEADER_SIZE + DNS_QUESTION_SIZE_ADJ
 
 /* https://mislove.org/teaching/cs4700/spring11/handouts/project1-primer.pdf */
@@ -313,10 +315,16 @@ char* debug_print_qname(char* qname) {
 */
 char* generate_DNS_request(char* hostname, uint16 id) {
 
-	char* request = malloc(RQEUEST_SIZE + strlen(hostname) + 1); /* add the lentgh of the hostname, since that is dynamic */
+	int request_index;
+	char* qname;
+	
+#define ADJUSTED_REQUEST_SIZE RQEUEST_SIZE + strlen(hostname) + 2
+
+	char* request = malloc(ADJUSTED_REQUEST_SIZE + 1); /* add the lentgh of the hostname, since that is dynamic. add 2 because the qname adds 2 more bytes */
 	if (request == NULL)
 		return NULL;
 
+	request[ADJUSTED_REQUEST_SIZE] = (char)0xAA;
 
 	/*  /------------\
 		| DNS HEADER |
@@ -332,7 +340,7 @@ char* generate_DNS_request(char* hostname, uint16 id) {
 	#define DNS_Z  0
 	#define DNS_RCODE 0
 
-	#define DNS_FLAGS DNS_RCODE | (DNS_Z << 4) | (DNS_RA << 7) | (DNS_RD << 8) | (DNS_TC << 9) | (DNS_AA << 10) | (DNS_OPCODE << 11) | (DNS_QR << 15)
+	#define DNS_FLAGS (DNS_RCODE | (DNS_Z << 4) | (DNS_RA << 7) | (DNS_RD << 8) | (DNS_TC << 9) | (DNS_AA << 10) | (DNS_OPCODE << 11) | (DNS_QR << 15))
 
 	/* id */
 	request[0] = (uint8)(id >> 8); /* load upper half of the id */
@@ -365,13 +373,155 @@ char* generate_DNS_request(char* hostname, uint16 id) {
 
 
 
-	/* TODO */
+/* the null terminator is important, since it signals the end of the qname */
+#define qnameLen (strlen(qname)+1)
+	qname = getQNAME(hostname);
+	
+#define reqIndexSTART 12
+	request_index = reqIndexSTART; /* ar count ended with index 11, so now new data is on index 12*/
+	
+	/* copy from the qname to the request. */
+	for (;request_index - reqIndexSTART < qnameLen;request_index++) {
+		request[request_index] = qname[request_index - reqIndexSTART];
+	}
+	free(qname); qname = NULL;
 
 
-	request[RQEUEST_SIZE] = 0; /* null terminated, so we cant print this thing as a string if we wish. */
+	/* QTYPE */
+	request[request_index+0] = 0;
+	request[request_index+1] = 1;
+
+	/* QCLASS */
+	request[request_index+2] = 0;
+	request[request_index+3] = 1;
+
+	if(request[ADJUSTED_REQUEST_SIZE] != (char)0xAA) {
+		puts("OOPS, I might have corupted memory in generate_DNS_request. Exiting progamm...");
+		exit(EXIT_FAILURE);
+	}
+
 	return request;
 }
 
+#define printable_DNS_request_format \
+"ID: %d\nQDCOUNT: %d\nANCOUNT: %d\nNSCOUNT: %d\nARCOUNT: %d\nFLAGS:\n\tQR: %d\n\tOpcode: %d\n\tAA: %d\n\tTC: %d\n\tRD: %d\n\tRA: %d\n\tZ: %d\n\tRCODE: %d\nQNAME: %s\nQTYPE: %d\nQCLASS: %d\n"
+
+#define longest_printable_DNS_request_with_empty_QNAME \
+"ID: 65536\nQDCOUNT: 65536\nANCOUNT: 65536\nNSCOUNT: 65536\nARCOUNT: 65536\nFLAGS:\n\tQR: 1\n\tOpcode: 15\n\tAA: 1\n\tTC: 1\n\tRD: 1\n\tRA: 1\n\tZ: 1\n\tRCODE: 15\nQNAME: \nQTYPE: 65536\nQCLASS: QCLASS\n"
+
+char* debug_get_printable_DNS_request(char* request) {
+
+	char* result;
+	int request_index;
+
+	/* header */
+	uint16 id;
+	uint16 flags;
+	uint16 qdcount;
+	uint16 ancount;
+	uint16 nscount;
+	uint16 arcount;
+
+	/* question */
+	char* qname;
+	uint16 qtype;
+	uint16 qclass;
+
+	if (request == NULL) {
+		mallocOrExit(result, 5);
+		strcpy(result, "NULL");
+		return result;
+	}
+	
+	id		= request[0] << 8 + request[1];
+	flags	= request[2] << 8 + request[3];
+	qdcount	= request[4] << 8 + request[5];
+	ancount	= request[6] << 8 + request[7];
+	nscount	= request[8] << 8 + request[9];
+	arcount	= request[10] << 8 + request[11];
+
+	request_index = reqIndexSTART;
+	qname = debug_get_printable_qname(request+request_index);
+
+	for (;request[request_index] != 0;request_index++) {
+		/* just wait till we hit the NULL terminator for the QNAME*/
+	}
+	request_index++; /*now move past the NULL terminator*/
+
+	qtype = request[request_index+0] << 8 + request[request_index+1];
+	qclass = request[request_index+2] << 8 + request[request_index+3];
+
+	request_index += 3; // save the offset where the request ends.
+
+	result = malloc(strlen(qname) + strlen(longest_printable_DNS_request_with_empty_QNAME) + 5); /* string lenght of longest request with empty qname, lengh of qname and 5 exta buffer */
+
+	if (
+		sprintf(result, printable_DNS_request_format, id, qdcount, ancount, nscount, arcount,
+			flags >> 15 & 0x1,
+			flags >> 11 & 0x7,
+			flags >> 10 & 0x1,
+			flags >> 9 & 0x1,
+			flags >> 8 & 0x1,
+			flags >> 7 & 0x1,
+			flags >> 4 & 0x1,
+			flags >> 0 & 0x7,
+			qname,
+			qtype,
+			qclass
+		)
+		== -1) 
+	{
+		mallocOrExit(result, 7);
+		strcpy(result, "ERROR!");
+	}
+	
+	free(qname); qname = NULL;
+	return result;
+}
+
+int compare_DNS_requests(char* requestA, char* requestB) {
+	int index = 0;
+
+	if (requestA == NULL && requestB == NULL) {
+		return 0xff;
+	}
+
+	if (requestA == NULL || requestB == NULL) {
+		return 0;
+	}
+
+	/* compare before the QNAME*/
+	while (index < reqIndexSTART) {
+		if (requestA[index] != requestB[index])
+			return 0;
+		index++;
+	}
+
+	// compare the QNAME
+	while (requestA[index] != 0 && requestB[index] != 0) {
+		if (requestA[index] != requestB[index])
+			return 0;
+		index++;
+	}
+
+	// check if both QNAMEs terminate
+	if (requestA[index] != requestB[index])
+		return 0;
+	index++;
+
+	// check the last 4 bytes
+	if (requestA[index+0] != requestB[index+0])
+		return 0;
+	if (requestA[index+1] != requestB[index+1])
+		return 0;
+	if (requestA[index+2] != requestB[index+2])
+		return 0;
+	if (requestA[index+3] != requestB[index+3])
+		return 0;
+
+	return 0xFF;
+
+}
 
 #ifdef POSIX
 
