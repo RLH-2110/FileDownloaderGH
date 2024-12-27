@@ -33,7 +33,8 @@ int main(){
 	int nresult;
 	char* str1;
 	char* str2;
-
+	int size;
+	int32* DNS_LIST;
 
 	for (i = 0; i < num_parse_URL_Tests;i++) {
 		result = parse_URL(testUrls[i]);
@@ -138,9 +139,14 @@ int main(){
 
 	/* generate_DNS_request(); */
 	for (i = 0; i < num_DNSREQ_Tests;i++) {
-		sresult = generate_DNS_request(test_DNSreq_hostnames[i], DNSREQ_test_ID);
+		sresult = generate_DNS_request(test_DNSreq_hostnames[i], DNSREQ_test_ID,&size);
 
-		if (compare_DNS_requests(sresult, expectedDNSRequest[i]) == 0) {
+		if (size != expectedDNSRequestSize[i]) {
+			printf("generate_DNS_request test %d failed\nexpected size:\n%d\ngot:\n%d\n", i + 1, expectedDNSRequestSize[i], size);
+			printf("test passed (%d out of %d)\n", i + 1, num_DNSREQ_Tests);
+			return EXIT_FAILURE;
+		}
+		else if (compare_DNS_requests(sresult, expectedDNSRequest[i]) == 0) {
 			printf("generate_DNS_request test %d failed\nexpected:\n%s\ngot:\n%s\n", i + 1, debug_get_printable_DNS_request(expectedDNSRequest[i]), debug_get_printable_DNS_request(sresult));
 			printf("test passed (%d out of %d)\n", i + 1, num_DNSREQ_Tests);
 			return EXIT_FAILURE;
@@ -153,17 +159,18 @@ int main(){
 
 	printf("generate_DNS_request tests passed (%d out of %d)\n", i, num_DNSREQ_Tests);
 
-	puts("TODO: add more tests for invalid inputs.");
+	puts("TODO: add more tests for invalid inputs.\n");
 
-	/*if (download_file("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt") != NULL){
+	/*if (download_file("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt") != NULL) {
 		puts("calling download_file without initalizing the DNS_LIST should return NULL!");
 		return 1;
 	}
-
+	
+*/
 	DNS_LIST = malloc(sizeof(int32) * 3);
 	DNS_LIST[0] = 0x08080808; /* 8.8.8.8 google dns*/
-/*	DNS_LIST[1] = 0x08080404; /* 8.8.4.4 google dns*/
-/*	DNS_LIST[2] = 0; /* null termination */
+	DNS_LIST[1] = 0x08080404; /* 8.8.4.4 google dns*/
+	DNS_LIST[2] = 0; /* null termination */
 /*	
 
 	if (download_file(NULL) != NULL){
@@ -175,8 +182,15 @@ int main(){
 		puts("passing invalid url to download_file should return NULL!");
 		return 1;
 	}
+*/
 
+	sresult = download_file("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",DNS_LIST);/**/
 
-	puts(download_file("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt"));/**/
+	for (i = 0; i < 1024; i++)
+	{
+		printf("%02X ", (unsigned char)sresult[i]);
+	}
+	printf("\n");
+
 	return 0;
 } 

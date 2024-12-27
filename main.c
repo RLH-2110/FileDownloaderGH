@@ -3,6 +3,7 @@
 #include <string.h>
 #include "downloader.h"
 #include "int.h"
+#include <time.h>
 
 #ifndef NULL
 #define NULL (void*)0
@@ -311,20 +312,25 @@ char* debug_get_printable_qname(char* qname) {
 /* https://mislove.org/teaching/cs4700/spring11/handouts/project1-primer.pdf */
 /* takes in a hostname and returns the DNS reqeust to resolve the hostname
 
+	output parameter: size: retuns the length of the request
+	
 	returns: byte array with the dns request (CALLER MUST FREE IT!)
 */
-char* generate_DNS_request(char* hostname, uint16 id) {
+char* generate_DNS_request(char* hostname, uint16 id, int* size) {
 
 	int request_index;
 	char* qname;
-	
+	char* request;
+
 #define ADJUSTED_REQUEST_SIZE RQEUEST_SIZE + strlen(hostname) + 2
 
-	char* request = malloc(ADJUSTED_REQUEST_SIZE + 1); /* add the lentgh of the hostname, since that is dynamic. add 2 because the qname adds 2 more bytes */
+	*size = ADJUSTED_REQUEST_SIZE;
+	request = malloc(ADJUSTED_REQUEST_SIZE + 1); /* add the lentgh of the hostname, since that is dynamic. add 2 because the qname adds 2 more bytes */
 	if (request == NULL)
 		return NULL;
 
 	request[ADJUSTED_REQUEST_SIZE] = (char)0xAA;
+	
 
 	/*  /------------\
 		| DNS HEADER |
@@ -453,7 +459,7 @@ char* debug_get_printable_DNS_request(char* request) {
 
 	request_index += 3; /* save the offset where the request ends. */
 
-	result = malloc(strlen(qname) + strlen(longest_printable_DNS_request_with_empty_QNAME) + 5); /* string lenght of longest request with empty qname, lengh of qname and 5 exta buffer */
+	mallocOrExit(result,(strlen(qname) + strlen(longest_printable_DNS_request_with_empty_QNAME) + 5)); /* string lenght of longest request with empty qname, lengh of qname and 5 exta buffer */
 
 	if (
 		sprintf(result, printable_DNS_request_format, id, qdcount, ancount, nscount, arcount,
@@ -527,12 +533,20 @@ int compare_DNS_requests(char* requestA, char* requestB) {
 
 /*  https://pubs.opengroup.org/onlinepubs/007904975/basedefs/sys/socket.h.html */
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
+char* download_file(char* url, int32* DNS_LIST){
 
-char* download_file(char* url){
-/*
 	struct sockaddr_in server_addr;
 	int ret;
+	char* DNS_request;
+	parsedUrl p_url;
+	uint16 id;
+	int request_size;
+	int sock;
+	socklen_t address_len = sizeof(struct sockaddr_in);
 
 	if (url == NULL || DNS_LIST == NULL){
 		perror("url and DNS_LIST must not be zero!");
@@ -540,15 +554,12 @@ char* download_file(char* url){
 	}
 
 	if (DNS_LIST[0] == 0){
-		perror("DNS_LIST is emptry")
+		perror("DNS_LIST is emptry");
 		return NULL;
 	}
 
-
-	/* UNTESTED CODE STARTS HERE*/
-
 	
-/*	int sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP); 
+	sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP); 
 	if (sock < 0) {
     	perror("socket failed");
     	return NULL;
@@ -556,19 +567,38 @@ char* download_file(char* url){
 
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(53); /* DNS port */
-/*	server_addr.sin_addr.s_addr = htonl(DNS_LIST[0]); 
+	server_addr.sin_addr.s_addr = htonl(DNS_LIST[0]); 
 
-	ret = connect(sock,&server_addr,sizeof(struct sockaddr_in));
+	ret = connect(sock, (struct sockaddr*)&server_addr, address_len);
 	if (ret != 0){
 		perror("connect failed");
 		return NULL;
 	}
 
+	id = (uint16)time(NULL);
+	p_url = parse_URL(url);
+	DNS_request = generate_DNS_request(p_url.hostname, id, &request_size);
+
+	if (sendto(sock, DNS_request, request_size, MSG_EOR, (struct sockaddr*)&server_addr, address_len) == -1) {
+		perror("error while doing sentto");
+		return NULL;
+	}
+	free(DNS_request);
+		
+#define recv_len 1024
+	DNS_request = malloc(recv_len); /* 1 KiB ought to be enough for everyone*/
+	if (recvfrom(sock, DNS_request, recv_len, MSG_WAITALL, (struct sockaddr*)&server_addr, &address_len) == -1) {
+		perror("error while doing recvfrom");
+		return NULL;
+	}
+
+	close(sock);
+
 	/* read this and then continue
 	/ https://mislove.org/teaching/cs4700/spring11/handouts/project1-primer.pdf
 	*/
 
-	return "hello world";
+	return DNS_request;
 }
 
 /* POSIX */

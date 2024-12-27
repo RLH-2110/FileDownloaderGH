@@ -228,5 +228,9 @@ typedef int bool;
 	expectedDNSreq1
 };
 
+ int expectedDNSRequestSize[num_DNSREQ_Tests] = {
+   38
+ };
+
 /*included_downloader_h*/
 #endif

@@ -11,13 +11,14 @@ extern uint32** DNS_LIST;
 
 /*
 	downloads a file from the specified url.
-	DNS_LIST must be filled with a null terminated list of DNS servers before calling this.
+	DNS_LIST must be filled with a null terminated list of DNS servers before calling this. 
+		DNS_LIST is a list of 32 bit integers thats terminated by null.
 
 	URL: char* that contains the string of the url where we want to download the file
 	
 	Returns: NULL if an error occured or a char* with the contents of the file
 */
-char* download_file(char* url);
+char* download_file(char* url, int32* DNS_LIST);
 
 
 
@@ -52,11 +53,13 @@ parsedUrl parse_URL(char* url);
 
 /* takes in a hostname and returns the DNS reqeust to resolve the hostname
 
+	output parameter: size: retuns the length of the request
+
 	this is used internally, and is only exported for testing
 
 	returns: byte array with the dns request (CALLER MUST FREE IT!)
 */
-char* generate_DNS_request(char* hostname, uint16 id);
+char* generate_DNS_request(char* hostname, uint16 id, int* size);
 
 
 
@@ -92,7 +95,9 @@ char* debug_get_printable_qname(char* qname);
 /* print out the DNS request for debugging.
 
 	WARNING: THIS FUNCTON WILL QUIT THE PROGAMM IN AN OUT OF MEMORY SCENARIO!
-
+	
+	WARNING: the input must point at a DNS request or NULL. Anything else will cause Undefined behavior which may cause a segfault!
+	
 	returns the qname, but the length values are written in ascii
 	you are epected to free the pointer!
 */
