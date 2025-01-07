@@ -753,29 +753,37 @@ retry_with_new_DNS:
 	
 	printflog("DNS has %d answers\n",dns_answers);
 
+	puts("respone: ");
+	for (i = 0; i < 1024; i++)
+	{
+		printf("%02X ", (unsigned char)DNS_request[i]);
+	}
+	printf("\n");
+
 	i = DNS_HEADER_SIZE; /* this should now point at the first byte of the DNS response */
 
 	for (dns_answers_index = 0; dns_answers_index < dns_answers && dns_answers_index < recv_len; dns_answers_index++){
 
 		/* skip though the name */
 		while(DNS_request[i] != 0){
-			if (DNS_request[i] & 0xC000){ /* pointer */
-				i++; 
+			
+			if (DNS_request[i] & 0xC000) /* pointer */
 				break;
-			}else{
+			else
 				i += DNS_request[i] + 1; /* got to next lenght specifier*/
-			}
+			
 		}
+		i++; /* go past the name */
 
 		/* check TYPE */
-		if (DNS_request[i] == 1){ /* if we found an A record */
+		if (DNS_request[i] == 0 && DNS_request[i+1] == 1){ /* if we found an A record */
 			state = DLS_found;
 		}else{
 			state = DLS_skipping;
 		}
-		i += 3; /* skip Type and TTL */
+		i += 5; /* skip Type and TTL */
 		
-		rdlength = DNS_request[i]; i++;
+		rdlength = DNS_request[i+1] | (DNS_request[i] << 8); i += 2;
 
 		if (state == DLS_skipping || rdlength != 4){ /* we are either not interested in the data, or the data is NOT a ipv4*/
 			i += rdlength + 1;
