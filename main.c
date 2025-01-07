@@ -4,6 +4,7 @@
 #include "downloader.h"
 #include "int.h"
 #include <time.h>
+#include <errno.h>
 
 #ifndef NULL
 #define NULL (void*)0
@@ -15,12 +16,36 @@ typedef int bool;
 #define false 0x0
 #endif
 
+#define putslog(str)\
+if(log != NULL){\
+	fputs(str,log);\
+	fputs("\n",log);\
+}
+#define perrorlog(str)\
+if(log != NULL){\
+	fputs(str,log);\
+	fputs(" ",log);\
+	fputs(strerror(errno),log);\
+	fputs("\n",log); \
+}
+
+
 enum trimState {
 	TS_findDot,
 	TS_trimStart,
 	TS_findEnd,
 	TS_exit
 };
+
+char* IPv4ToString(int32 ip){
+
+	char* str = malloc(4*4); /* 4*4, because it is 4 times maximal 3 digits plus a seperator or NULL*/
+	if (str == NULL)
+		return NULL;
+
+	sprintf(str,"%d.%d.%d.%d", (ip & 0xFF000000) >> 24 , (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
+	return str;
+}
 
 /*
 	url: the VALID url to parse. this will not fix broken urls
@@ -316,7 +341,7 @@ char* debug_get_printable_qname(char* qname) {
 	
 	returns: byte array with the dns request (CALLER MUST FREE IT!)
 */
-char* generate_DNS_request(char* hostname, uint16 id, int* size) {
+char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log) {
 
 	int request_index;
 	char* qname;
@@ -402,7 +427,7 @@ char* generate_DNS_request(char* hostname, uint16 id, int* size) {
 	request[request_index+3] = 1;
 
 	if(request[ADJUSTED_REQUEST_SIZE] != (char)0xAA) {
-		puts("OOPS, I might have corupted memory in generate_DNS_request. Exiting progamm...");
+		putslog("OOPS, I might have corupted memory in generate_DNS_request. Exiting progamm...");
 		exit(EXIT_FAILURE);
 	}
 
@@ -536,9 +561,11 @@ int compare_DNS_requests(char* requestA, char* requestB) {
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <sys/time.h>
 
-char* download_file(char* url, int32* DNS_LIST){
+int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 
+	struct timeval tv;
 	struct sockaddr_in server_addr;
 	int ret;
 	char* DNS_request;
@@ -546,59 +573,109 @@ char* download_file(char* url, int32* DNS_LIST){
 	uint16 id;
 	int request_size;
 	int sock;
+	int DNSindex; /* the DNS_LIST index*/
 	socklen_t address_len = sizeof(struct sockaddr_in);
 
 	if (url == NULL || DNS_LIST == NULL){
-		perror("url and DNS_LIST must not be zero!");
-		return NULL;
+		perrorlog("url and DNS_LIST must not be zero!");
+		return 0;
 	}
 
 	if (DNS_LIST[0] == 0){
-		perror("DNS_LIST is emptry");
-		return NULL;
+		perrorlog("DNS_LIST is emptry");
+		return 0;
 	}
+	DNSindex = 0;
+
+
+
+	if (!true){ /* never go here normally */
+
+retry_with_new_DNS:
+		close(sock); /* close socket */
+		DNSindex++;
+		if (DNS_LIST[DNSindex] == 0){
+			putslog("Can not connect to any dns in the list!");
+			return 0;
+		}
+	}	
+
 
 	
 	sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP); 
 	if (sock < 0) {
-    	perror("socket failed");
-    	return NULL;
+    	perrorlog("socket failed");
+    	return 0;
+	}
+
+	/* setting socket options */
+	tv.tv_sec = 0;
+	tv.tv_usec = 500000; /* this is in microseconds and equals to 500 ms) */
+	if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) != 0){
+		perrorlog("setting socket timeout failed");
+		close(sock);
+		return 0;
 	}
 
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(53); /* DNS port */
-	server_addr.sin_addr.s_addr = htonl(DNS_LIST[0]); 
+	server_addr.sin_addr.s_addr = htonl(DNS_LIST[DNSindex]); 
+
+	putslog("debug: Trying to connect...");
 
 	ret = connect(sock, (struct sockaddr*)&server_addr, address_len);
 	if (ret != 0){
-		perror("connect failed");
-		return NULL;
+		perrorlog("connect failed");
+		goto retry_with_new_DNS;
 	}
 
 	id = (uint16)time(NULL);
 	p_url = parse_URL(url);
-	DNS_request = generate_DNS_request(p_url.hostname, id, &request_size);
+	DNS_request = generate_DNS_request(p_url.hostname, id, &request_size, log);
+
+
+	putslog("debug: Trying send...");
 
 	if (sendto(sock, DNS_request, request_size, MSG_EOR, (struct sockaddr*)&server_addr, address_len) == -1) {
-		perror("error while doing sentto");
-		return NULL;
+		perrorlog("error while doing sentto");
+		goto DNS_lookup_cleanup;
 	}
 	free(DNS_request);
 		
+
+	putslog("debug: Trying to recive...");
+
+	errno = 0;
+
 #define recv_len 1024
 	DNS_request = malloc(recv_len); /* 1 KiB ought to be enough for everyone*/
 	if (recvfrom(sock, DNS_request, recv_len, MSG_WAITALL, (struct sockaddr*)&server_addr, &address_len) == -1) {
-		perror("error while doing recvfrom");
-		return NULL;
+
+		if (errno == EAGAIN || errno == EWOULDBLOCK){ /* Timeout */
+			free(DNS_request);
+			goto retry_with_new_DNS;
+		}
+
+		perrorlog("error while doing recvfrom");
+		goto DNS_lookup_cleanup;
 	}
+
+	putslog("debug: done for now.");
 
 	close(sock);
 
-	/* read this and then continue
-	/ https://mislove.org/teaching/cs4700/spring11/handouts/project1-primer.pdf
-	*/
+	putslog("temporary debug result as return value! fix it later!");
+	return 5;
 
-	return DNS_request;
+DNS_lookup_cleanup:
+	free(DNS_request);
+	close(sock);
+	return 0;
+}
+
+char* download_file(char* url, int32* DNS_LIST, FILE* log){
+	puts("Not implemented");
+	return NULL;
 }
 
 /* POSIX */

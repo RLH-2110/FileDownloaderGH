@@ -2,6 +2,7 @@
 #define included_downloader_h
 
 #include "int.h"
+#include <stdio.h>
 
 /*
 	Null terminated DNS LIST (IPV4) 
@@ -16,9 +17,11 @@ extern uint32** DNS_LIST;
 
 	URL: char* that contains the string of the url where we want to download the file
 	
+	log: optional log file. set to NULL if unused, or set it to point to a open file
+
 	Returns: NULL if an error occured or a char* with the contents of the file
 */
-char* download_file(char* url, int32* DNS_LIST);
+char* download_file(char* url, int32* DNS_LIST, FILE* log);
 
 
 
@@ -57,9 +60,11 @@ parsedUrl parse_URL(char* url);
 
 	this is used internally, and is only exported for testing
 
+	log: optional log file. set to NULL if unused, or set it to point to a open file
+
 	returns: byte array with the dns request (CALLER MUST FREE IT!)
 */
-char* generate_DNS_request(char* hostname, uint16 id, int* size);
+char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log);
 
 
 
@@ -108,6 +113,26 @@ char* debug_get_printable_DNS_request(char* request);
 	returns a non zero value if they are the same.
 */
 int compare_DNS_requests(char* requestA, char* requestB);
+
+/*
+	looks up the IPV4 of the provided url, using the list of dns servers.
+
+	url: string of the url to parse. its expected that the url is in a valid format.
+	DNS_LIST: a null terminated list of IPV4 addresses that are DNS servers. the addresses are saved as 32 bit integers
+	log: optional log file. set to NULL if unused, or set it to point to a open stream
+
+	returns: 0 if there was an error, or the IPV4 Address of the answer, if there was one.
+*/
+int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log);
+
+/* turns the ip address to a string.
+	ip: a 32 bit integer holding the ipv4 address
+
+	returns a string formated as a decimal ip using periods as seperator.
+	YOU MUST FREE IT!
+	returns NULL on error
+*/
+char* IPv4ToString(int32 ip);
 
 /*included_downloader_h*/
 #endif
