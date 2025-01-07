@@ -104,7 +104,7 @@ char* debug_get_printable_qname(char* qname);
 	WARNING: the input must point at a DNS request or NULL. Anything else will cause Undefined behavior which may cause a segfault!
 	
 	returns the qname, but the length values are written in ascii
-	you are epected to free the pointer!
+	you are expected to free the pointer!
 */
 char* debug_get_printable_DNS_request(char* request);
 

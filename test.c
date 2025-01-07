@@ -35,7 +35,7 @@ int main(){
 	char* str2;
 	int size;
 	int32* DNS_LIST;
-	int32 IPresult;
+	int32 iPresult;
 	FILE* log;
 	log = NULL;
 
@@ -193,7 +193,6 @@ int main(){
 	DNS_LIST[1] = 0x08080404; /* 8.8.4.4 google dns*/
 	DNS_LIST[2] = 0x7F000035; /* 172.0.0.53 some private DNS in a local network where google DNS is blocked*/
 	DNS_LIST[3] = 0; /* null termination */
-
 /*	
 
 	if (download_file(NULL) != NULL){
@@ -210,9 +209,13 @@ int main(){
 	puts("manually testing DNS_lookup");
 
 	log = fopen("./log.txt","w");
-	IPresult = DNS_lookup("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",DNS_LIST, log);/**/
+	iPresult = DNS_lookup("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",DNS_LIST, log);/**/
 	fclose(log);
 
+	if (iPresult != 0)
+		printf("the ip address is: %s\n", IPv4ToString(iPresult));
+	else 
+		puts("error when trying to find the ip");
 	/*if (sresult == NULL){
 		puts("Progamm terminated because of an error");
 		return EXIT_FAILURE;

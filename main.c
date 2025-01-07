@@ -5,6 +5,7 @@
 #include "int.h"
 #include <time.h>
 #include <errno.h>
+#include "DNS_offsets.h"
 
 #ifndef NULL
 #define NULL (void*)0
@@ -28,7 +29,10 @@ if(log != NULL){\
 	fputs(strerror(errno),log);\
 	fputs("\n",log); \
 }
-
+#define printflog(str,var)\
+if(log != NULL){\
+	fprintf(log,str,var);\
+}
 
 enum trimState {
 	TS_findDot,
@@ -343,6 +347,7 @@ char* debug_get_printable_qname(char* qname) {
 */
 char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log) {
 
+	uint16 dns_flags;
 	int request_index;
 	char* qname;
 	char* request;
@@ -362,40 +367,39 @@ char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log) {
 	    \------------/  */
 
 	/* https://mislove.org/teaching/cs4700/spring11/handouts/project1-primer.pdf */
-	#define DNS_QR 0
-	#define DNS_OPCODE 0 
-	#define DNS_AA 0 
-	#define DNS_TC 0
-	#define DNS_RD 1
-	#define DNS_RA 0
-	#define DNS_Z  0
-	#define DNS_RCODE 0
-
-	#define DNS_FLAGS (DNS_RCODE | (DNS_Z << 4) | (DNS_RA << 7) | (DNS_RD << 8) | (DNS_TC << 9) | (DNS_AA << 10) | (DNS_OPCODE << 11) | (DNS_QR << 15))
-
+	dns_flags = 0;
+	DNS_FLAGS_SET_QR(		dns_flags,0);
+	DNS_FLAGS_SET_OPCODE(	dns_flags,0);
+	DNS_FLAGS_SET_AA(		dns_flags,0);
+	DNS_FLAGS_SET_TC(		dns_flags,0);
+	DNS_FLAGS_SET_RD(		dns_flags,1);
+	DNS_FLAGS_SET_RA(		dns_flags,0);
+	DNS_FLAGS_SET_Z(		dns_flags,0);
+	DNS_FLAGS_SET_RCODE(	dns_flags,0);
+	
 	/* id */
-	request[0] = (uint8)(id >> 8); /* load upper half of the id */
-	request[1] = (uint8)id;		   /* load lowe half of the id  */
+	request[DNS_HEADER_ID_OFFSET]   = (uint8)(id >> 8); /* load upper half of the id */
+	request[DNS_HEADER_ID_OFFSET+1] = (uint8)id;		/* load lowe half of the id  */
 	
 	/* flags */
-	request[2] = (uint8)(DNS_FLAGS >> 8);
-	request[3] = (uint8)(DNS_FLAGS);
+	request[DNS_HEADER_FLAGS_OFFSET]   = (uint8)(dns_flags >> 8);
+	request[DNS_HEADER_FLAGS_OFFSET+1] = (uint8)(dns_flags);
 
 	/* QD count */
-	request[4] = 0;
-	request[5] = 1;
+	request[DNS_HEADER_QDCOUNT_OFFSET]   = 0;
+	request[DNS_HEADER_QDCOUNT_OFFSET+1] = 1;
 
 	/* AN count */
-	request[6] = 0;
-	request[7] = 0;
+	request[DNS_HEADER_ANCOUNT_OFFSET]   = 0;
+	request[DNS_HEADER_ANCOUNT_OFFSET+1] = 0;
 
 	/* MS count */
-	request[8] = 0;
-	request[9] = 0;
+	request[DNS_HEADER_MSCOUNT_OFFSET]   = 0;
+	request[DNS_HEADER_MSCOUNT_OFFSET+1] = 0;
 
 	/* AR count */
-	request[10] = 0;
-	request[11] = 0;
+	request[DNS_HEADER_ARCOUNT_OFFSET]   = 0;
+	request[DNS_HEADER_ARCOUNT_OFFSET+1] = 0;
 
 
 	/*  /--------------\
@@ -563,7 +567,20 @@ int compare_DNS_requests(char* requestA, char* requestB) {
 #include <unistd.h>
 #include <sys/time.h>
 
+enum DNS_lookup_state {
+	DLS_skipping,
+	DLS_found
+};
+
 int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
+
+	uint16 dns_answers;
+	int dns_answers_index;
+	int i;
+	uint16 flags;
+	int state;
+	uint16 rdlength;
+	uint32 ip_address;
 
 	struct timeval tv;
 	struct sockaddr_in server_addr;
@@ -660,12 +677,124 @@ retry_with_new_DNS:
 		goto DNS_lookup_cleanup;
 	}
 
-	putslog("debug: done for now.");
+	putslog("got a response!");
 
 	close(sock);
 
-	putslog("temporary debug result as return value! fix it later!");
-	return 5;
+
+
+
+
+
+
+	/*   /###############\   */
+	/*  /                 \  */
+	/* | we got the reply! | */
+	/*  \                 /  */
+	/*   \###############/   */
+
+
+	flags = DNS_construct_flags(DNS_request[DNS_HEADER_FLAGS_OFFSET],DNS_request[DNS_HEADER_FLAGS_OFFSET+1]);
+
+	/* check if the ID is the same */
+	if (DNS_request[DNS_HEADER_ID_OFFSET] != (char)((id & 0xFF00)>>8) || DNS_request[DNS_HEADER_ID_OFFSET+1] != (char)(id & 0xFF)){
+
+		printf("\nresponse upper:\t %d\n excpected upper:\n %d\n\nresponse lower:\t %d\nexpected lower:\t %d\n",DNS_request[DNS_HEADER_ID_OFFSET],((id & 0xFF00)>>8),DNS_request[DNS_HEADER_ID_OFFSET+1],(id & 0xFF));
+
+		putslog("The IDs not match!");
+		goto retry_with_new_DNS;
+	}
+	
+	/* check if its actually an answer*/
+	if (DNS_FLAGS_GET_QR(flags) != 1){
+		putslog("The DNS responed with a question!");
+		goto retry_with_new_DNS;
+	}
+
+	/* make sure the server does not have any querries for us, since that would mess up the structure */
+	if(DNS_request[DNS_HEADER_QDCOUNT_OFFSET] != 0 || DNS_request[DNS_HEADER_QDCOUNT_OFFSET] != 0){
+		putslog("The dns has question records!");
+		goto retry_with_new_DNS;
+	}
+
+	/* check if there was no error */
+	if(DNS_FLAGS_GET_RCODE(flags) != 0){
+		switch(DNS_FLAGS_GET_RCODE(flags)){
+		case 1:
+			putslog("CRITICAL! DNS RESPONEDED WITH 'FORMAT ERROR' IN THE RCODE!"); break;
+
+		case 2:
+			putslog("DNS responded with 'Server failure' in RCODE"); break;
+		
+		case 3:
+			putslog("DNS responed with 'Name Error' in RCODE"); break;
+		
+		case 4:
+			putslog("DNS responed with 'Not Implemented' in RCODE"); break;
+		
+		case 5:
+			putslog("DNS responed with 'Refused' in RCODE"); break;
+			
+		default:
+			printflog("DNS responed with unrecognized RCODE: %d\n",DNS_FLAGS_GET_RCODE(DNS_request[DNS_HEADER_FLAGS_OFFSET])); break;
+		}
+
+		goto retry_with_new_DNS;
+	}
+
+	/* check that its not trunkated */
+	if(DNS_FLAGS_GET_TC(flags) != 0){
+		putslog("The DNS responed with tuncation!");
+		goto retry_with_new_DNS;
+	}
+
+	dns_answers = DNS_request[DNS_HEADER_ANCOUNT_OFFSET] << 8;
+	dns_answers |= DNS_request[DNS_HEADER_ANCOUNT_OFFSET+1];
+	
+	printflog("DNS has %d answers\n",dns_answers);
+
+	i = DNS_HEADER_SIZE; /* this should now point at the first byte of the DNS response */
+
+	for (dns_answers_index = 0; dns_answers_index < dns_answers && dns_answers_index < recv_len; dns_answers_index++){
+
+		/* skip though the name */
+		while(DNS_request[i] != 0){
+			if (DNS_request[i] & 0xC000){ /* pointer */
+				i++; 
+				break;
+			}else{
+				i += DNS_request[i] + 1; /* got to next lenght specifier*/
+			}
+		}
+
+		/* check TYPE */
+		if (DNS_request[i] == 1){ /* if we found an A record */
+			state = DLS_found;
+		}else{
+			state = DLS_skipping;
+		}
+		i += 3; /* skip Type and TTL */
+		
+		rdlength = DNS_request[i]; i++;
+
+		if (state == DLS_skipping || rdlength != 4){ /* we are either not interested in the data, or the data is NOT a ipv4*/
+			i += rdlength + 1;
+		}else{
+			/*This is the IPV4 we want!*/
+
+			ip_address = (DNS_request[i+3] <<  0);
+			ip_address = (DNS_request[i+2] <<  8);
+			ip_address = (DNS_request[i+1] << 16);
+			ip_address = (DNS_request[i+0] << 24);
+
+			free(DNS_request);
+			close(sock);
+			return ip_address;
+		}
+	}
+
+	/* we dit not find any results */
+	goto retry_with_new_DNS;
 
 DNS_lookup_cleanup:
 	free(DNS_request);
