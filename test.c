@@ -33,7 +33,11 @@ int main(){
 	int nresult;
 	char* str1;
 	char* str2;
-
+	int size;
+	int32* DNS_LIST;
+	int32 iPresult;
+	FILE* log;
+	log = NULL;
 
 	for (i = 0; i < num_parse_URL_Tests;i++) {
 		result = parse_URL(testUrls[i]);
@@ -138,9 +142,14 @@ int main(){
 
 	/* generate_DNS_request(); */
 	for (i = 0; i < num_DNSREQ_Tests;i++) {
-		sresult = generate_DNS_request(test_DNSreq_hostnames[i], DNSREQ_test_ID);
+		sresult = generate_DNS_request(test_DNSreq_hostnames[i], DNSREQ_test_ID,&size, stderr);
 
-		if (compare_DNS_requests(sresult, expectedDNSRequest[i]) == 0) {
+		if (size != expectedDNSRequestSize[i]) {
+			printf("generate_DNS_request test %d failed\nexpected size:\n%d\ngot:\n%d\n", i + 1, expectedDNSRequestSize[i], size);
+			printf("test passed (%d out of %d)\n", i + 1, num_DNSREQ_Tests);
+			return EXIT_FAILURE;
+		}
+		else if (compare_DNS_requests(sresult, expectedDNSRequest[i]) == 0) {
 			printf("generate_DNS_request test %d failed\nexpected:\n%s\ngot:\n%s\n", i + 1, debug_get_printable_DNS_request(expectedDNSRequest[i]), debug_get_printable_DNS_request(sresult));
 			printf("test passed (%d out of %d)\n", i + 1, num_DNSREQ_Tests);
 			return EXIT_FAILURE;
@@ -153,17 +162,37 @@ int main(){
 
 	printf("generate_DNS_request tests passed (%d out of %d)\n", i, num_DNSREQ_Tests);
 
-	puts("TODO: add more tests for invalid inputs.");
 
-	/*if (download_file("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt") != NULL){
+	/* IPv4ToString(); */
+	for (i = 0; i < num_IPv4ToString_Tests;i++) {
+		sresult = IPv4ToString(test_str_ips[i]);
+
+		if (compare(sresult, expected_strIPs[i]) != 0) {
+			printf("IPv4ToString test %d failed\nexpected:\n%s\n\ngot:\n%s\n", i + 1, expected_strIPs[i], sresult);
+			printf("test passed (%d out of %d)\n", i + 1, num_IPv4ToString_Tests);
+			return EXIT_FAILURE;
+		}
+		else {
+			printf("IPv4ToString test %d passed\n", i + 1);
+		}
+		free(sresult); sresult = NULL;
+	}
+
+	printf("IPv4ToString tests passed (%d out of %d)\n", i, num_IPv4ToString_Tests);
+
+	puts("TODO: add more tests for invalid inputs.\n");
+
+	/*if (download_file("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt") != NULL) {
 		puts("calling download_file without initalizing the DNS_LIST should return NULL!");
 		return 1;
 	}
-
-	DNS_LIST = malloc(sizeof(int32) * 3);
+	
+*/
+	DNS_LIST = malloc(sizeof(int32) * 4);
 	DNS_LIST[0] = 0x08080808; /* 8.8.8.8 google dns*/
-/*	DNS_LIST[1] = 0x08080404; /* 8.8.4.4 google dns*/
-/*	DNS_LIST[2] = 0; /* null termination */
+	DNS_LIST[1] = 0x08080404; /* 8.8.4.4 google dns*/
+	DNS_LIST[2] = 0x7F000035; /* 172.0.0.53 some private DNS in a local network where google DNS is blocked*/
+	DNS_LIST[3] = 0; /* null termination */
 /*	
 
 	if (download_file(NULL) != NULL){
@@ -175,8 +204,30 @@ int main(){
 		puts("passing invalid url to download_file should return NULL!");
 		return 1;
 	}
+*/
+
+	puts("manually testing DNS_lookup");
+
+	log = fopen("./log.txt","w");
+	iPresult = DNS_lookup("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",DNS_LIST, log);/**/
+	fclose(log);
+
+	if (iPresult != 0)
+		printf("the ip address is: %s\n", IPv4ToString(iPresult));
+	else 
+		puts("error when trying to find the ip");
+	/*if (sresult == NULL){
+		puts("Progamm terminated because of an error");
+		return EXIT_FAILURE;
+	}
+
+	for (i = 0; i < 1024; i++)
+	{
+		printf("%02X ", (unsigned char)sresult[i]);
+	}
+	printf("\n");
+	*/
 
 
-	puts(download_file("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt"));/**/
 	return 0;
 } 

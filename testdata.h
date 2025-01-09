@@ -1,6 +1,8 @@
 #ifndef included_testdata_h
 #define included_testdata_h
 
+#include "int.h"
+
 #ifndef NULL
 #define NULL (void*)0
 #endif
@@ -227,6 +229,15 @@ typedef int bool;
  char* expectedDNSRequest[num_DNSREQ_Tests] = {
 	expectedDNSreq1
 };
+
+ int expectedDNSRequestSize[num_DNSREQ_Tests] = {
+   38
+ };
+
+
+#define num_IPv4ToString_Tests 2
+int32 test_str_ips[num_IPv4ToString_Tests] = { 0x000203FF, 0xFFFFFFFF };
+char* expected_strIPs[num_IPv4ToString_Tests] = { "0.2.3.255", "255.255.255.255" };
 
 /*included_downloader_h*/
 #endif
