@@ -581,6 +581,7 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 	int state;
 	uint16 rdlength;
 	uint32 ip_address;
+	uint16 dns_questions;
 
 	struct timeval tv;
 	struct sockaddr_in server_addr;
@@ -711,12 +712,6 @@ retry_with_new_DNS:
 		goto retry_with_new_DNS;
 	}
 
-	/* make sure the server does not have any querries for us, since that would mess up the structure */
-	if(DNS_request[DNS_HEADER_QDCOUNT_OFFSET] != 0 || DNS_request[DNS_HEADER_QDCOUNT_OFFSET] != 0){
-		putslog("The dns has question records!");
-		goto retry_with_new_DNS;
-	}
-
 	/* check if there was no error */
 	if(DNS_FLAGS_GET_RCODE(flags) != 0){
 		switch(DNS_FLAGS_GET_RCODE(flags)){
@@ -762,14 +757,37 @@ retry_with_new_DNS:
 
 	i = DNS_HEADER_SIZE; /* this should now point at the first byte of the DNS response */
 
-	for (dns_answers_index = 0; dns_answers_index < dns_answers && dns_answers_index < recv_len; dns_answers_index++){
 
+
+	/* handle if the server returns dns questions */
+	dns_questions = DNS_request[DNS_HEADER_QDCOUNT_OFFSET+1] + (DNS_request[DNS_HEADER_QDCOUNT_OFFSET] << 8);
+
+	for(;dns_questions > 0;dns_questions--){
 		/* skip though the name */
+		/* note: the url we asked for is stored in p_url.hostname. if we want to, we can check if the answer we got matches what we asked for*/
 		while(DNS_request[i] != 0){
 			
 			if (DNS_request[i] & 0xC000) /* pointer */
 				break;
 			else
+				i += DNS_request[i] + 1; /* got to next lenght specifier*/
+		}
+
+		i += 5; /* go to the next section*/
+	}
+
+
+
+	/* handle DNS responses */
+	for (dns_answers_index = 0; dns_answers_index < dns_answers && dns_answers_index < recv_len; dns_answers_index++){
+
+		/* skip though the name */
+		while(DNS_request[i] != 0){
+			
+			if (DNS_request[i] & 0xC000){ /* pointer */
+				i++;
+				break;
+			}else
 				i += DNS_request[i] + 1; /* got to next lenght specifier*/
 			
 		}
@@ -781,19 +799,19 @@ retry_with_new_DNS:
 		}else{
 			state = DLS_skipping;
 		}
-		i += 5; /* skip Type and TTL */
+		i += 8; /* skip Type and TTL */
 		
 		rdlength = DNS_request[i+1] | (DNS_request[i] << 8); i += 2;
 
 		if (state == DLS_skipping || rdlength != 4){ /* we are either not interested in the data, or the data is NOT a ipv4*/
-			i += rdlength + 1;
+			i += rdlength;
 		}else{
 			/*This is the IPV4 we want!*/
 
 			ip_address = (DNS_request[i+3] <<  0);
-			ip_address = (DNS_request[i+2] <<  8);
-			ip_address = (DNS_request[i+1] << 16);
-			ip_address = (DNS_request[i+0] << 24);
+			ip_address |= (DNS_request[i+2] <<  8);
+			ip_address |= (DNS_request[i+1] << 16);
+			ip_address |= (DNS_request[i+0] << 24);
 
 			free(DNS_request);
 			close(sock);
