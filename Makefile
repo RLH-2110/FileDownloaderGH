@@ -1,7 +1,7 @@
 gcc = gcc -ansi -pedantic -Wall
-includes = 
-files = main.c
-output = downloader.lib
+files = main.c helpers.c
+ofiles := $(files:.c=.o)
+output = downloader.a
 cleanup = test.o log.txt
 
 # OS FLAGS
@@ -14,7 +14,9 @@ $(info    assuming posix)
 endif
 
 all:
-	$(gcc) -g $(files) $(includes) -c -o $(output) $(OSFLAG)
+	$(gcc) -g $(files) -c $(OSFLAG)
+
+	ar cr $(output) $(ofiles)
 	$(gcc) -g test.c $(output) -o test.o
 	
 
@@ -27,3 +29,4 @@ clear: clean
 clean:
 	rm -f $(output)
 	rm -f $(cleanup)
+	rm -f $(ofiles)

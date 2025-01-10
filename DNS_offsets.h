@@ -24,6 +24,9 @@
 #define DNS_Z_BITOFFSET  4
 #define DNS_RCODE_BITOFFSET 0
 
+
+#define DNS_QUESTION_OFFSET 12
+
 #define DNS_construct_flags(upper, lower) ((lower & 0xFF) | ((upper & 0xFF) << 8))
 
 /*

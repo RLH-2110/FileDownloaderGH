@@ -1,4 +1,4 @@
 token.txt
-downloader.lib
-test.o
+*.o
+*.a
 log.txt
