@@ -126,7 +126,7 @@ retry_with_new_DNS:
 
 	ip = DNS_parse_reply(DNS_request, id, recv_len, log);
 	if (ip == 0)
-		goto retry_with_new_DNS
+		goto retry_with_new_DNS;
 
 	free(DNS_request);
 	close(sock);
