@@ -198,9 +198,8 @@ int main(){
 	DNS_LIST[0] = 0x08080808; /* 8.8.8.8 google dns*/
 	DNS_LIST[1] = 0x08080404; /* 8.8.4.4 google dns*/
 	DNS_LIST[2] = 0x7F000035; /* 172.0.0.53 some private DNS in a local network where google DNS is blocked*/
-	DNS_LIST[3] = 0; /* null termination */
-
-
+	DNS_LIST[3] = 0xAC10020C; /* 127.16.2.12 same as above*/
+	DNS_LIST[4] = 0; /* null termination */
 
 	puts("manually testing DNS_lookup");
 

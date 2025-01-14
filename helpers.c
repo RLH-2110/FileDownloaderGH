@@ -33,7 +33,7 @@ char* debug_get_printable_qname(char* qname) {
 	int state = 0;
 	unsigned char length;
 	char* buff;
-	int i;
+	unsigned int i;
 
 	char* resultp;
 

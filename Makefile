@@ -3,10 +3,12 @@ files = main_*.c helpers.c
 ofiles := $(files:.c=.o)
 output = downloader.a
 cleanup = test.o log.txt
+ldflags =
 
 # OS FLAGS
 ifeq ($(OS),Windows_NT)
     OSFLAG = -D WINDOWS
+	LDFLAGS = -lws2_32
 $(info    detected windows)
 else
 	OSFLAG = -D POSIX
@@ -17,10 +19,10 @@ all:
 	$(gcc) -g $(files) -c $(OSFLAG)
 
 	ar cr $(output) $(ofiles)
-	$(gcc) -g test.c $(output) -o test.o
+	$(gcc) -g test.c $(output) -o test.o $(LDFLAGS)
 	
 
-PHONEY: clear clean run
+PHONY: clear clean run
 
 run: all
 	./test.o

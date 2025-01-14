@@ -25,6 +25,7 @@
 
 int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 
+	char* tmp;
 	uint32 ip;
 	struct timeval tv;
 	struct sockaddr_in server_addr;
@@ -81,6 +82,10 @@ retry_with_new_DNS:
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(53); /* DNS port */
 	server_addr.sin_addr.s_addr = htonl(DNS_LIST[DNSindex]); 
+
+	tmp = IPv4ToString(htonl(DNS_LIST[DNSindex]));
+	printflog("trying DNS: %s\n", tmp);
+	free(tmp);
 
 	putslog("debug: Trying to connect...");
 
