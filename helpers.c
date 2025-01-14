@@ -9,6 +9,15 @@
 #include "defines.h"
 
 
+/* these are just here for IPv4ToStringR, because I am to lazy to reverse the bytes myself (I tried to, but I am to lazy to fix my broken mess)*/
+#ifdef POSIX
+#include <arpa/inet.h>
+#endif
+#ifdef WINDOWS
+#include <winsock2.h>
+#endif
+
+
 
 /*
 
