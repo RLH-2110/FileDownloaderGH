@@ -83,7 +83,7 @@ retry_with_new_DNS:
 	server_addr.sin_port = htons(53); /* DNS port */
 	server_addr.sin_addr.s_addr = htonl(DNS_LIST[DNSindex]); 
 
-	tmp = IPv4ToString(htonl(DNS_LIST[DNSindex]));
+	tmp = IPv4ToStringR(htonl(DNS_LIST[DNSindex]));
 	printflog("trying DNS: %s\n", tmp);
 	free(tmp);
 
@@ -104,7 +104,9 @@ retry_with_new_DNS:
 
 	if (sendto(sock, DNS_request, request_size, MSG_EOR, (struct sockaddr*)&server_addr, address_len) == -1) {
 		perrorlog("error while doing sentto");
-		goto DNS_lookup_cleanup;
+		free(DNS_request);
+		close(sock);
+		return 0;
 	}
 	free(DNS_request);
 		
@@ -118,12 +120,11 @@ retry_with_new_DNS:
 	if (recvfrom(sock, DNS_request, recv_len, MSG_WAITALL, (struct sockaddr*)&server_addr, &address_len) == -1) {
 
 		if (errno == EAGAIN || errno == EWOULDBLOCK){ /* Timeout */
-			free(DNS_request);
-			goto retry_with_new_DNS;
+		}else{
+			perrorlog("error while doing recvfrom")
 		}
-
-		perrorlog("error while doing recvfrom");
-		goto DNS_lookup_cleanup;
+		free(DNS_request);;
+		goto retry_with_new_DNS;
 	}
 
 	putslog("got a response!");
@@ -138,10 +139,6 @@ retry_with_new_DNS:
 	return ip;
 
 
-DNS_lookup_cleanup:
-	free(DNS_request);
-	close(sock);
-	return 0;
 }
 
 char* download_file(char* url, int32* DNS_LIST, FILE* log){

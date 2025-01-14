@@ -79,9 +79,11 @@
 			server_addr.sin_port = htons(53); /* DNS port */
 			server_addr.sin_addr.s_addr = htonl(DNS_LIST[DNSindex]);
 
-			tmp = IPv4ToString(htonl(DNS_LIST[DNSindex]));
+
+			tmp = IPv4ToStringR(htonl(DNS_LIST[DNSindex]));
 			printflog("trying DNS: %s\n", tmp);
 			free(tmp);
+			
 
 
 			putslog("debug: Trying to connect...");
@@ -116,17 +118,13 @@
 			DNS_request = malloc(recv_len); /* 1 KiB ought to be enough for everyone*/
 			if (recvfrom(sock, DNS_request, recv_len, 0, (struct sockaddr*)&server_addr, &address_len) == -1) {
 
-				if (WSAGetLastError() == WSAETIMEDOUT){ /* Timeout */
-					free(DNS_request); 
-					closesocket(sock);
-					continue;
+				if (WSAGetLastError() != WSAETIMEDOUT){ /* not a Timeout */
+					perrorlog_winsock("error while doing recvfrom");
 				}
-
-				perrorlog_winsock("error while doing recvfrom");
+								
 				free(DNS_request); 
 				closesocket(sock);
-				WSACleanup();
-				return 0;
+				continue;
 			}
 
 			putslog("got a response!");

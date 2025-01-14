@@ -146,5 +146,8 @@ int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log);
 */
 char* IPv4ToString(int32 ip);
 
+/* same as above, but it will reverse the byte order first, so that you can print ip adresses that are in network order*/
+char* IPv4ToStringR(int32 ip);
+
 /*included_downloader_h*/
 #endif
