@@ -125,6 +125,18 @@ int compare_DNS_requests(char* requestA, char* requestB);
 */
 int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log);
 
+/* parses a DNS repsonse and turns it into an IP
+
+	DNS_response: char pointer pointing to the first byte of the response
+	id:	expected return ID from the DNS response
+	recv_len: the maximum length of DNS_response, used to guard against segmentation faults
+	log: optional logging file, set to NULL if unused
+
+	returns the ip if one could be found otherwhise it returns 0
+*/
+int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log);
+
+
 /* turns the ip address to a string.
 	ip: a 32 bit integer holding the ipv4 address
 
@@ -133,6 +145,9 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log);
 	returns NULL on error
 */
 char* IPv4ToString(int32 ip);
+
+/* same as above, but it will reverse the byte order first, so that you can print ip adresses that are in network order*/
+char* IPv4ToStringR(int32 ip);
 
 /*included_downloader_h*/
 #endif

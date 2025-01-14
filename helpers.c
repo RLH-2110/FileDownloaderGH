@@ -9,6 +9,15 @@
 #include "defines.h"
 
 
+/* these are just here for IPv4ToStringR, because I am to lazy to reverse the bytes myself (I tried to, but I am to lazy to fix my broken mess)*/
+#ifdef POSIX
+#include <arpa/inet.h>
+#endif
+#ifdef WINDOWS
+#include <winsock2.h>
+#endif
+
+
 
 /*
 
@@ -25,7 +34,12 @@ char* IPv4ToString(int32 ip){
 	sprintf(str,"%d.%d.%d.%d", (ip & 0xFF000000) >> 24 , (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
 	return str;
 }
+char* IPv4ToStringR(int32 ip){
+	int32 neoIP;
 
+	neoIP = htonl(ip); /* reverse it */
+	return IPv4ToString(neoIP);
+}
 
 char* debug_get_printable_qname(char* qname) {
 
@@ -33,7 +47,7 @@ char* debug_get_printable_qname(char* qname) {
 	int state = 0;
 	unsigned char length;
 	char* buff;
-	int i;
+	unsigned int i;
 
 	char* resultp;
 
