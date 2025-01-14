@@ -8,7 +8,7 @@
 
 #ifndef true
 typedef int bool;
-#define true 0xFF
+#define true 0x01
 #define false 0x0
 #endif
 

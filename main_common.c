@@ -358,9 +358,12 @@ char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log) {
 	return request;
 }
 
+enum DNS_lookup_state {
+	DLS_skipping,
+	DLS_found
+};
 
-
-int32 DNS_parse_reply(char* DNS_response){
+int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log){
 
 	uint16 dns_answers;
 	int dns_answers_index;
@@ -431,7 +434,7 @@ int32 DNS_parse_reply(char* DNS_response){
 	{
 		printflog("%02X ", (unsigned char)DNS_response[i]);
 	}
-	printflog("\n");
+	putslog("\n");
 
 	i = DNS_HEADER_SIZE; /* this should now point at the first byte of the DNS response */
 

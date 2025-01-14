@@ -21,10 +21,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-enum DNS_lookup_state {
-	DLS_skipping,
-	DLS_found
-};
+
 
 int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 
@@ -127,7 +124,7 @@ retry_with_new_DNS:
 	putslog("got a response!");
 
 
-	ip = DNS_parse_reply(DNS_request);
+	ip = DNS_parse_reply(DNS_request, id, recv_len, log);
 	if (ip == 0)
 		goto retry_with_new_DNS
 
