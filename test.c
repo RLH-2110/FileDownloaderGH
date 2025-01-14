@@ -190,8 +190,27 @@ int main(){
 	printf("IPv4ToString tests passed (%d out of %d)\n", i, num_IPv4ToString_Tests);
 	total_test_passes += i; total_tests += num_IPv4ToString_Tests;
 
-	printf("Total tests passed (%d out of %d)\n", total_test_passes, total_tests);
-	puts("TODO: add more tests for invalid inputs.\n");
+
+
+
+	/* DNS_lookup */
+
+	iPresult = DNS_lookup("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",NULL, NULL);
+	if (iPresult == 0)
+		puts("DNS_lookup test 1 passed");
+	else
+		printf("test passed (0 out of %d)\n", num_DNS_lookup_Tests);
+	
+	DNS_LIST = malloc(sizeof(int32) * 1);
+	DNS_LIST[0] = 0; /* null termination */
+
+	iPresult = DNS_lookup("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",DNS_LIST, NULL);
+	if (iPresult == 0)
+		puts("DNS_lookup test 2 passed");
+	else
+		printf("test passed (1 out of %d)\n", num_DNS_lookup_Tests);
+
+	free(DNS_LIST); DNS_LIST = NULL;
 
 
 	DNS_LIST = malloc(sizeof(int32) * 4);
@@ -201,17 +220,45 @@ int main(){
 	DNS_LIST[3] = 0xAC10020C; /* 127.16.2.12 same as above*/
 	DNS_LIST[4] = 0; /* null termination */
 
-	puts("manually testing DNS_lookup");
-
 	log = fopen("./log.txt","w");
-	iPresult = DNS_lookup("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",DNS_LIST, log);/**/
+
+
+	/* still DNS_lookup; */
+	for (i = 0; i < num_DNS_lookup_Tests;i++) {
+		iPresult = DNS_lookup(test_DNS_lookups[i],DNS_LIST, log);
+
+		if (iPresult == 0) {
+
+			if (find_expected_DNS_lookups != 0){
+				tmp = 42;
+
+				puts("!!!TODO!!!"); /*  use script idea*/
+
+			}else
+				tmp = 0;
+
+			printf("DNS_lookup test %d failed\nexpected:\n%s\n\ngot:\n%s\n", i + 1, tmp, sresult);
+			printf("test passed (%d out of %d)\n", i + 1 + 2, num_DNS_lookup_Tests);
+			return EXIT_FAILURE;
+		}
+		else {
+			printf("DNS_lookup test %d passed\n", i + 1);
+		}
+	}
 	fclose(log);
 
-	if (iPresult != 0)
-		printf("the ip address is: %s\n", IPv4ToString(iPresult));
-	else 
-		puts("error when trying to find the ip");
+	printf("DNS_lookup tests passed (%d out of %d)\n", i, num_DNS_lookup_Tests);
+	total_test_passes += i + 2; total_tests += num_DNS_lookup_Tests + 2;
 
+
+
+
+
+
+
+
+	printf("Total tests passed (%d out of %d)\n", total_test_passes, total_tests);
+	puts("TODO: add more tests for invalid inputs.\n");
 
 	return 0;
 } 
