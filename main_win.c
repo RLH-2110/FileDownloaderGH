@@ -15,6 +15,8 @@
 
 #ifdef WINDOWS
 
+	#include <winsock2.h>
+
 	int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 		puts("Not implemented");
 		return 0;

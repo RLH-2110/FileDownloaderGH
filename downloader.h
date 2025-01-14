@@ -125,6 +125,12 @@ int compare_DNS_requests(char* requestA, char* requestB);
 */
 int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log);
 
+/* parses a DNS repsonse and turns it into an IP
+
+	returns the ip if one could be found otherwhise it returns 0
+*/
+int32 DNS_parse_reply(char* DNS_response)
+
 /* turns the ip address to a string.
 	ip: a 32 bit integer holding the ipv4 address
 
