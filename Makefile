@@ -1,5 +1,5 @@
 gcc = gcc -ansi -pedantic -Wall
-files = main.c helpers.c
+files = main_*.c helpers.c
 ofiles := $(files:.c=.o)
 output = downloader.a
 cleanup = test.o log.txt
