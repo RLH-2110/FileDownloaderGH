@@ -3,7 +3,7 @@
 #ifdef WINDOWS
 #include <conio.h>
 char pgetc() {
-	return _getc();
+	return getch();
 }
 #endif // WINDOWS
 

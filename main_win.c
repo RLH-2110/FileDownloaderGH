@@ -50,6 +50,10 @@
 		    return 0;
 		}
 
+		if (url == "") {
+			putslog("gave an empty url!");
+			return 0;
+		}
 
 		for(DNSindex = 0;;DNSindex++){
 

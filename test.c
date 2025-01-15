@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "testdata.h"
+#include "getc.h"
 
 #ifndef NULL
 #define NULL (void*)0
@@ -238,8 +239,7 @@ int main(void){
 
 	/* still DNS_lookup; */
 	for (i = 0; i < num_DNS_lookup_Tests;i++) {
-		/*iPresult = DNS_lookup(test_DNS_lookups[i],DNS_LIST, log);*/
-		iPresult = 0;
+		iPresult = DNS_lookup(test_DNS_lookups[i],DNS_LIST, log);
 		
 		if (find_expected_DNS_lookups[i] != false){
 			
@@ -250,7 +250,7 @@ int main(void){
 			str1 = malloc_oom(strlen(NSLOOKUP_STR) + strlen(test_DNS_lookups[i]) + 1);
 			strcpy(str1, NSLOOKUP_STR);
 			strcpy(str1 + strlen(NSLOOKUP_STR),test_DNS_lookups[i]);
-			/*system(str1);*/
+			system(str1);
 			puts(str1);
 			free(str1); str1 = NULL;
 
@@ -295,6 +295,27 @@ int main(void){
 } 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define oI_buffsize 4
 
 bool isNum(char chr){
@@ -324,10 +345,27 @@ void get_input(char* buff, size_t lengh, FILE* steam) {
 	size_t i;
 	for (i = 0;i < lengh - 1;i++) {
 		
-		c = fgetc(steam);
-		if (c == '\n' || c == EOF || c == '.')
+		c = pgetc();
+		if (c == '\n' || c == EOF || c == '.' | c == '\r') {
+			buff[i] = '\0';
 			break;
+		}
 
+		if (c == 0x8) { /* backspace */
+			i -= 2;
+
+			if (i > lengh) { /* underflow */
+				i = -1; /* i will be incremented afterwards, so it will reset to 0*/
+				continue;
+			}
+
+			/* delete old input*/
+			fputc(c, stdout);
+			fputc(' ', stdout);
+			fputc(c, stdout);
+
+			continue;
+		}
 		if (isNum(c) == false) {
 			/* redo getting char*/
 			--i;
@@ -335,9 +373,7 @@ void get_input(char* buff, size_t lengh, FILE* steam) {
 		}
 
 		buff[i] = c;
-#ifdef POSIX
 		fputc(c, stdout);
-#endif
 	}
 
 	buff[lengh - 1] = '\0';
@@ -387,17 +423,26 @@ octetInput_restart:
 		+ (buff[1] - '0') * 10
 		+ (buff[0] - '0') * 100;
 
-		printf("you entered: %d\n",val);
-
 	return val;
 }
 
 int32 ipv4Input(void){
 
 	int32 ip;
+	char* debugprint;
 
-	fputs("First octet",stdout);
-	ip = octetInput();
+	fputs("fist (msb) octet",stdout);
+	ip  = (octetInput() << 24);
+	fputs("\nsecond octet", stdout);
+	ip |= (octetInput() << 16);
+	fputs("\nthird octet", stdout);
+	ip |= (octetInput() << 8);
+	fputs("\nlast octet", stdout);
+	ip |= (octetInput() << 0);
+	
+	debugprint = IPv4ToString(ip);
+	printf("\nip: %s\n", debugprint);
+	free(debugprint); debugprint = NULL;
 
 	return ip;
 }
