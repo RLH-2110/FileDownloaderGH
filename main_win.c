@@ -44,16 +44,16 @@
 			return 0;
 		}
 
+		if (url[0] == '\0') {
+			putslog("gave an empty url!");
+			return 0;
+		}
 
 		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
 		    perrorlog("WSAStartup failed");
 		    return 0;
 		}
 
-		if (url == "") {
-			putslog("gave an empty url!");
-			return 0;
-		}
 
 		for(DNSindex = 0;;DNSindex++){
 
