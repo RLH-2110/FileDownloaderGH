@@ -242,7 +242,7 @@ char* expected_strIPs[num_IPv4ToString_Tests] = { "0.2.3.255", "255.255.255.255"
 
 #define num_DNS_lookup_Tests 4
 char* test_DNS_lookups[num_DNS_lookup_Tests] = { "www.google.com", "github.com" , "", NULL}; /* we do not test more cases, since they are undefined behavior and not my problem*/
-bool find_expected_DNS_lookups[num_DNS_lookup_Tests] = { true, true, false false};
+bool find_expected_DNS_lookups[num_DNS_lookup_Tests] = { true, true, false, false};
 
 
 /*included_downloader_h*/

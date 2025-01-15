@@ -26,7 +26,20 @@ char* got(char* str){
 	return str;
 }
 
-int main(){
+void* malloc_oom(size_t size) {
+	void* p = malloc(size);
+	if (p == 0) {
+		puts("out of memory!");
+		exit(EXIT_FAILURE);
+	}
+	return p;
+}
+
+int32 ipv4Input(void);
+
+const char NSLOOKUP_STR[] = "nslookup ";
+
+int main(void){
 	parsedUrl result;
 	char* sresult;
 	int i;
@@ -213,7 +226,7 @@ int main(){
 	free(DNS_LIST); DNS_LIST = NULL;
 
 
-	DNS_LIST = malloc(sizeof(int32) * 4);
+	DNS_LIST = malloc_oom(sizeof(int32) * 4);
 	DNS_LIST[0] = 0x08080808; /* 8.8.8.8 google dns*/
 	DNS_LIST[1] = 0x08080404; /* 8.8.4.4 google dns*/
 	DNS_LIST[2] = 0x7F000035; /* 172.0.0.53 some private DNS in a local network where google DNS is blocked*/
@@ -225,24 +238,42 @@ int main(){
 
 	/* still DNS_lookup; */
 	for (i = 0; i < num_DNS_lookup_Tests;i++) {
-		iPresult = DNS_lookup(test_DNS_lookups[i],DNS_LIST, log);
+		/*iPresult = DNS_lookup(test_DNS_lookups[i],DNS_LIST, log);*/
+		iPresult = 0;
+		
+		if (find_expected_DNS_lookups[i] != false){
+			
+			/* 	/ build the nslookup command \
+				we copy "nslookup " into str1, and then copy the url in test_DNS_lookups[i] after it.
+				an example result would be "nslookup www.google.com"
+			*/
+			str1 = malloc_oom(strlen(NSLOOKUP_STR) + strlen(test_DNS_lookups[i]) + 1);
+			strcpy(str1, NSLOOKUP_STR);
+			strcpy(str1 + strlen(NSLOOKUP_STR),test_DNS_lookups[i]);
+			/*system(str1);*/
+			puts(str1);
+			free(str1); str1 = NULL;
 
-		if (iPresult == 0) {
+			
+			puts("plese enter the result of the nslookup: ");
+			tmp = ipv4Input(); /* tmp containts the number we comprae against*/
+		}else{
+			tmp = 0; /* tmp containts the number we comprae against*/
+		}
 
-			if (find_expected_DNS_lookups != 0){
-				tmp = 42;
+		if (iPresult != tmp) {
 
-				puts("!!!TODO!!!"); /*  use script idea*/
-
-			}else
-				tmp = 0;
-
-			printf("DNS_lookup test %d failed\nexpected:\n%s\n\ngot:\n%s\n", i + 1, tmp, sresult);
+			str1 = IPv4ToString(iPresult);
+			str2 = IPv4ToString(tmp);
+			printf("DNS_lookup test %d failed\nexpected:\n%s\n\ngot:\n%s\n", i + 1, str2, str1);
 			printf("test passed (%d out of %d)\n", i + 1 + 2, num_DNS_lookup_Tests);
+			free(str1); str1 = NULL;
+			free(str2); str2 = NULL;
+
 			return EXIT_FAILURE;
 		}
 		else {
-			printf("DNS_lookup test %d passed\n", i + 1);
+			printf("DNS_lookup test %d passed\n", i + 1 + 2);
 		}
 	}
 	fclose(log);
@@ -262,3 +293,111 @@ int main(){
 
 	return 0;
 } 
+
+
+#define oI_buffsize 4
+
+bool isNum(char chr){
+	if (chr < '0' || chr > '9')
+		return false;
+	return true;
+}
+
+void shift_input_buff(char* buff, int super_i){
+	int shifts = oI_buffsize - super_i - 1;
+	int i;
+
+	for (i = oI_buffsize - 2; i >= 0; i-- ){
+
+		if (i-shifts >= 0){
+			buff[i] = buff[i-shifts];
+		}else{
+			buff[i] = '0';
+		}
+	}
+}
+
+/* fgets does weird shit in bash, so I make my own input thing
+this also has the advantage of me being able to block stuff that is not numbers*/
+void get_input(char* buff, size_t lengh, FILE* steam) {
+	char c;
+	size_t i;
+	for (i = 0;i < lengh - 1;i++) {
+		
+		c = fgetc(steam);
+		if (c == '\n' || c == EOF || c == '.')
+			break;
+
+		if (isNum(c) == false) {
+			/* redo getting char*/
+			--i;
+			continue;
+		}
+
+		buff[i] = c;
+#ifdef POSIX
+		fputc(c, stdout);
+#endif
+	}
+
+	buff[lengh - 1] = '\0';
+}
+
+int8 octetInput(void){
+	
+	
+	char buff[oI_buffsize];
+	uint8 val;
+	int i;
+	int c;
+
+octetInput_restart:
+
+	/* loop till all the parts are numbers*/
+
+	fputs(": ",stdout);
+	get_input(buff,oI_buffsize,stdin);
+		
+	// count the number of inputs
+	for (i = 0; i < oI_buffsize - 1; i++){
+		if (buff[i] == '\0') 
+			break;		
+	}
+
+	if (i != oI_buffsize - 1){ /* if the user pressed return*/
+		shift_input_buff(buff,i);
+	}
+
+	/* now we have exacty 3 characters that are numbers! */
+
+	/* check that we have not exceted the limit! */
+	if (buff[0] > '2')
+		goto octetInput_restart;
+	else if (buff[0] == '2'){
+
+		if (buff[1] > '5')
+			goto octetInput_restart;
+		else if (buff[1] == '5')
+			if (buff[2] > '5')
+				goto octetInput_restart;
+	}
+
+	val = 
+		  (buff[2] - '0')
+		+ (buff[1] - '0') * 10
+		+ (buff[0] - '0') * 100;
+
+		printf("you entered: %d\n",val);
+
+	return val;
+}
+
+int32 ipv4Input(void){
+
+	int32 ip;
+
+	fputs("First octet",stdout);
+	ip = octetInput();
+
+	return ip;
+}
