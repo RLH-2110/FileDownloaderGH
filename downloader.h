@@ -127,6 +127,8 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log);
 
 /* parses a DNS repsonse and turns it into an IP
 
+	invalid urls will result in undefined behavior!
+
 	DNS_response: char pointer pointing to the first byte of the response
 	id:	expected return ID from the DNS response
 	recv_len: the maximum length of DNS_response, used to guard against segmentation faults

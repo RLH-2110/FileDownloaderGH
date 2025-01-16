@@ -1,6 +1,7 @@
 gcc = gcc -ansi -pedantic -Wall
-files = main_*.c helpers.c
-ofiles := $(files:.c=.o)
+files_stage1 = main_*.c helpers.c
+files_stage2 = test.c getc.c ipinput.c
+ofiles := $(files_stage1:.c=.o)
 output = downloader.a
 cleanup = test.o log.txt
 ldflags =
@@ -16,10 +17,10 @@ $(info    assuming posix)
 endif
 
 all:
-	$(gcc) -g $(files) -c $(OSFLAG)
+	$(gcc) -g $(files_stage1) -c $(OSFLAG)
 
 	ar cr $(output) $(ofiles)
-	$(gcc) -g test.c $(output) -o test.o $(LDFLAGS)
+	$(gcc) -g $(files_stage2) $(output) -o test.o $(LDFLAGS) $(OSFLAG)
 	
 
 PHONY: clear clean run

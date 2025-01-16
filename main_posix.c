@@ -48,6 +48,10 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 		return 0;
 	}
 
+	if (url[0] == '\0') {
+		putslog("gave an empty url!");
+		return 0;
+	}
 
 
 

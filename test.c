@@ -26,7 +26,21 @@ char* got(char* str){
 	return str;
 }
 
-int main(){
+void* malloc_oom(size_t size) {
+	void* p = malloc(size);
+	if (p == 0) {
+		puts("out of memory!");
+		exit(EXIT_FAILURE);
+	}
+	return p;
+}
+
+int32 ipv4Input(void);
+
+const char NSLOOKUP_STR[] = "nslookup ";
+
+
+int main(void){
 	parsedUrl result;
 	char* sresult;
 	int i;
@@ -190,28 +204,97 @@ int main(){
 	printf("IPv4ToString tests passed (%d out of %d)\n", i, num_IPv4ToString_Tests);
 	total_test_passes += i; total_tests += num_IPv4ToString_Tests;
 
-	printf("Total tests passed (%d out of %d)\n", total_test_passes, total_tests);
-	puts("TODO: add more tests for invalid inputs.\n");
 
 
-	DNS_LIST = malloc(sizeof(int32) * 4);
+
+	/* DNS_lookup */
+
+	iPresult = DNS_lookup("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",NULL, NULL);
+	if (iPresult == 0)
+		puts("DNS_lookup test 1 passed");
+	else
+		printf("test passed (0 out of %d)\n", num_DNS_lookup_Tests);
+	
+	DNS_LIST = malloc(sizeof(int32) * 1);
+	DNS_LIST[0] = 0; /* null termination */
+
+	iPresult = DNS_lookup("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",DNS_LIST, NULL);
+	if (iPresult == 0)
+		puts("DNS_lookup test 2 passed");
+	else
+		printf("test passed (1 out of %d)\n", num_DNS_lookup_Tests);
+
+	free(DNS_LIST); DNS_LIST = NULL;
+
+
+	DNS_LIST = malloc_oom(sizeof(int32) * 4);
 	DNS_LIST[0] = 0x08080808; /* 8.8.8.8 google dns*/
 	DNS_LIST[1] = 0x08080404; /* 8.8.4.4 google dns*/
 	DNS_LIST[2] = 0x7F000035; /* 172.0.0.53 some private DNS in a local network where google DNS is blocked*/
 	DNS_LIST[3] = 0xAC10020C; /* 127.16.2.12 same as above*/
 	DNS_LIST[4] = 0; /* null termination */
 
-	puts("manually testing DNS_lookup");
-
 	log = fopen("./log.txt","w");
-	iPresult = DNS_lookup("https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",DNS_LIST, log);/**/
+
+
+	/* still DNS_lookup; */
+	for (i = 0; i < num_DNS_lookup_Tests;i++) {
+		iPresult = DNS_lookup(test_DNS_lookups[i],DNS_LIST, log);
+		
+		if (find_expected_DNS_lookups[i] != false){
+			
+			/* 	/ build the nslookup command \
+				we copy "nslookup " into str1, and then copy the url in test_DNS_lookups[i] after it.
+				an example result would be "nslookup www.google.com"
+			*/
+			str1 = malloc_oom(strlen(NSLOOKUP_STR) + strlen(test_DNS_lookups[i]) + 1);
+			strcpy(str1, NSLOOKUP_STR);
+			strcpy(str1 + strlen(NSLOOKUP_STR),test_DNS_lookups[i]);
+			system(str1);
+			puts(str1);
+			free(str1); str1 = NULL;
+
+			
+			puts("plese enter the result of the nslookup: ");
+			tmp = ipv4Input(); /* tmp containts the number we comprae against*/
+		}else{
+			tmp = 0; /* tmp containts the number we comprae against*/
+		}
+
+		if (iPresult != tmp) {
+
+			str1 = IPv4ToString(iPresult);
+			str2 = IPv4ToString(tmp);
+			printf("DNS_lookup test %d failed\nexpected:\n%s\n\ngot:\n%s\n", i + 1, str2, str1);
+			printf("test passed (%d out of %d)\n", i + 1 + 2, num_DNS_lookup_Tests);
+			free(str1); str1 = NULL;
+			free(str2); str2 = NULL;
+
+			return EXIT_FAILURE;
+		}
+		else {
+			printf("DNS_lookup test %d passed\n", i + 1 + 2);
+		}
+	}
 	fclose(log);
 
-	if (iPresult != 0)
-		printf("the ip address is: %s\n", IPv4ToString(iPresult));
-	else 
-		puts("error when trying to find the ip");
+	printf("DNS_lookup tests passed (%d out of %d)\n", i, num_DNS_lookup_Tests);
+	total_test_passes += i + 2; total_tests += num_DNS_lookup_Tests + 2;
 
+
+
+
+
+
+
+
+	printf("Total tests passed (%d out of %d)\n", total_test_passes, total_tests);
+	puts("TODO: add more tests for invalid inputs.\n");
 
 	return 0;
 } 
+
+
+
+
+
