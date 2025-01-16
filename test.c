@@ -58,7 +58,7 @@ int main(void){
 	int total_tests;
 	int32 tmp;
 
-
+	
 	/* manually testing the function*/
 	char buff[100];
 	while(true){
