@@ -39,9 +39,6 @@ int32 ipv4Input(void);
 
 const char NSLOOKUP_STR[] = "nslookup ";
 
-/* debbuging*/
-void get_input(char* buff, size_t lengh, FILE* steam);
-/* end debugging */
 
 int main(void){
 	parsedUrl result;
@@ -57,14 +54,6 @@ int main(void){
 	int total_test_passes;
 	int total_tests;
 	int32 tmp;
-
-	
-	/* manually testing the function*/
-	char buff[100];
-	while(true){
-		get_input(buff, 100, stdin);
-		puts("");
-	}
 
 	log = NULL;
 	total_test_passes = 0; total_tests = 0;

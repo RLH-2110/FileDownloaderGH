@@ -34,6 +34,12 @@ char pgetc() {
     /* Restore the original terminal attributes */
     tcsetattr(STDIN_FILENO, TCSANOW, &oldattr);
 
+    #ifndef NO_PGETC_BACKSPACE_FIX
+        if (ch == 0x7F) /* posix might send 0x7F when pressing backspace instead of 0x08 */
+            ch = 0x08;
+    #endif
+
+
     return ch;
 
 }
