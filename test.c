@@ -39,6 +39,7 @@ int32 ipv4Input(void);
 
 const char NSLOOKUP_STR[] = "nslookup ";
 
+
 int main(void){
 	parsedUrl result;
 	char* sresult;
@@ -53,7 +54,6 @@ int main(void){
 	int total_test_passes;
 	int total_tests;
 	int32 tmp;
-
 
 	log = NULL;
 	total_test_passes = 0; total_tests = 0;
