@@ -20,7 +20,7 @@ all:
 	$(gcc) -g $(files_stage1) -c $(OSFLAG)
 
 	ar cr $(output) $(ofiles)
-	$(gcc) -g $(files_stage2) $(output) -o test.o $(LDFLAGS)
+	$(gcc) -g $(files_stage2) $(output) -o test.o $(LDFLAGS) $(OSFLAG)
 	
 
 PHONY: clear clean run
