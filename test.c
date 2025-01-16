@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include "testdata.h"
-#include "getc.h"
 
 #ifndef NULL
 #define NULL (void*)0

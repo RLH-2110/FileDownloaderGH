@@ -1,8 +1,12 @@
-#ifndef included_downloader_h
-#define included_downloader_h
+#ifndef included_getc_h
+#define included_getc_h
 
 #include<stdio.h>
 
-char pgetc(FILE* steam);
+/* 
+	gets exactly one character without printing it to the console
+*/
+char pgetc();
 
+/* included_getc_h */
 #endif

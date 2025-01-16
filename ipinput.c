@@ -1,8 +1,10 @@
-
 #include <stdlib.h>
-#include "defines.h"
 #include <stdio.h>
-#include "int.h";
+
+#include "defines.h"
+#include "int.h"
+#include "getc.h"
+#include "downloader.h"
 
 #define oI_buffsize 4
 
@@ -35,7 +37,7 @@ void get_input(char* buff, size_t lengh, FILE* steam) {
 	for (i = 0;i < lengh - 1;i++) {
 
 		c = pgetc();
-		if (c == '\n' || c == EOF || c == '.' | c == '\r') {
+		if (c == '\n' || c == EOF || c == '.' || c == '\r') {
 			buff[i] = '\0';
 			break;
 		}
@@ -74,8 +76,7 @@ int8 octetInput(void) {
 	char buff[oI_buffsize];
 	uint8 val;
 	int i;
-	int c;
-
+	
 octetInput_restart:
 
 	/* loop till all the parts are numbers*/
@@ -83,7 +84,7 @@ octetInput_restart:
 	fputs(": ", stdout);
 	get_input(buff, oI_buffsize, stdin);
 
-	// count the number of inputs
+	/* count the number of inputs */
 	for (i = 0; i < oI_buffsize - 1; i++) {
 		if (buff[i] == '\0')
 			break;
