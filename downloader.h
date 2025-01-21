@@ -17,12 +17,22 @@ extern uint32** DNS_LIST;
 
 	URL: char* that contains the string of the url where we want to download the file
 	
+	port: the port to connect to, something like 80 or 443
+
+	out_fileSize: pointer to where you want to store the lenght of the donwloaded data
+
 	log: optional log file. set to NULL if unused, or set it to point to a open file
 
 	Returns: NULL if an error occured or a char* with the contents of the file
 */
-char* download_file(char* url, int32* DNS_LIST, FILE* log);
+char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize, FILE* log);
 
+
+/* this should be called once and that should happen before the frist download_file call. this function has open ssl init stuff*/
+void downloader_init(void);
+
+/* this should be called before the progamm exist, if downloader_init was called. this function has open ssl cleanup stuff**/
+void donwloader_cleanup(void);
 
 
 
@@ -42,15 +52,25 @@ typedef struct parsedUrl {
 
 
 /* 
-	url: the url to normalize. this is used internally, and is only exported for testing
+	url: the url to split into its components
 
-	returns a normalized url from the url (example: turning https://pubs.opengroup.org/onlinepubs/007904975/basedefs/sys/socket.h.html to pubs.opengroup.org
+	returns a parsedUrl struct from the url (example: spliting https://pubs.opengroup.org/onlinepubs/007904975/basedefs/sys/socket.h.html into https, pubs.opengroup.org, /onlinepubs/007904975/basedefs/sys/socket.h.html 
 	this is just a char* srting or NULL if there was an error
 
-	THE CALLER MUST FREE THE NORMALIZED URL!
+	THE CALLER MUST FREE THE FIELDS OF THE STRUCT!!
 */
 parsedUrl parse_URL(char* url);
 
+
+/*
+	buff: buffer to the raw http response
+	length: lenght of the buffer
+	out_size: the size of the output buffer
+	log: optional log file, can be set to NULL
+
+	return: NULL on error, buffer with only the file content on success
+*/
+char* httpResponseToRaw(char* buff, uint32 length, uint32* out_size,FILE* log);
 
 
 

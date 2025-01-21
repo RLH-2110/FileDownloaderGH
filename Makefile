@@ -13,6 +13,7 @@ ifeq ($(OS),Windows_NT)
 $(info    detected windows)
 else
 	OSFLAG = -D POSIX
+	LDFLAGS = -lssl -lcrypto
 $(info    assuming posix)
 endif
 

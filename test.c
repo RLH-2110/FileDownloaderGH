@@ -40,7 +40,7 @@ int32 ipv4Input(void);
 const char NSLOOKUP_STR[] = "nslookup ";
 
 
-int main(void){
+int main(int argc, char** argv){
 	parsedUrl result;
 	char* sresult;
 	int i;
@@ -54,6 +54,11 @@ int main(void){
 	int total_test_passes;
 	int total_tests;
 	int32 tmp;
+	int32 out_fileSize;
+	bool skip_manual_DNS_tests = false;
+
+	if (argc > 1)
+		skip_manual_DNS_tests = true;
 
 	log = NULL;
 	total_test_passes = 0; total_tests = 0;
@@ -237,57 +242,82 @@ int main(void){
 	log = fopen("./log.txt","w");
 
 
-	/* still DNS_lookup; */
-	for (i = 0; i < num_DNS_lookup_Tests;i++) {
-		iPresult = DNS_lookup(test_DNS_lookups[i],DNS_LIST, log);
-		
-		if (find_expected_DNS_lookups[i] != false){
+	if (!skip_manual_DNS_tests){
+
+		/* still DNS_lookup; */
+		for (i = 0; i < num_DNS_lookup_Tests;i++) {
+			iPresult = DNS_lookup(test_DNS_lookups[i],DNS_LIST, log);
 			
-			/* 	/ build the nslookup command \
-				we copy "nslookup " into str1, and then copy the url in test_DNS_lookups[i] after it.
-				an example result would be "nslookup www.google.com"
-			*/
-			str1 = malloc_oom(strlen(NSLOOKUP_STR) + strlen(test_DNS_lookups[i]) + 1);
-			strcpy(str1, NSLOOKUP_STR);
-			strcpy(str1 + strlen(NSLOOKUP_STR),test_DNS_lookups[i]);
-			system(str1);
-			puts(str1);
-			free(str1); str1 = NULL;
+			if (find_expected_DNS_lookups[i] != false){
+				
+				/* 	/ build the nslookup command \
+					we copy "nslookup " into str1, and then copy the url in test_DNS_lookups[i] after it.
+					an example result would be "nslookup www.google.com"
+				*/
+				str1 = malloc_oom(strlen(NSLOOKUP_STR) + strlen(test_DNS_lookups[i]) + 1);
+				strcpy(str1, NSLOOKUP_STR);
+				strcpy(str1 + strlen(NSLOOKUP_STR),test_DNS_lookups[i]);
+				system(str1);
+				puts(str1);
+				free(str1); str1 = NULL;
 
-			
-			puts("plese enter the result of the nslookup: ");
-			tmp = ipv4Input(); /* tmp containts the number we comprae against*/
-		}else{
-			tmp = 0; /* tmp containts the number we comprae against*/
+				
+				puts("plese enter the result of the nslookup: ");
+				tmp = ipv4Input(); /* tmp containts the number we comprae against*/
+			}else{
+				tmp = 0; /* tmp containts the number we comprae against*/
+			}
+
+			if (iPresult != tmp) {
+
+				str1 = IPv4ToString(iPresult);
+				str2 = IPv4ToString(tmp);
+				printf("DNS_lookup test %d failed\nexpected:\n%s\n\ngot:\n%s\n", i + 1, str2, str1);
+				printf("test passed (%d out of %d)\n", i + 1 + 2, num_DNS_lookup_Tests);
+				free(str1); str1 = NULL;
+				free(str2); str2 = NULL;
+
+				return EXIT_FAILURE;
+			}
+			else {
+				printf("DNS_lookup test %d passed\n", i + 1 + 2);
+			}
 		}
-
-		if (iPresult != tmp) {
-
-			str1 = IPv4ToString(iPresult);
-			str2 = IPv4ToString(tmp);
-			printf("DNS_lookup test %d failed\nexpected:\n%s\n\ngot:\n%s\n", i + 1, str2, str1);
-			printf("test passed (%d out of %d)\n", i + 1 + 2, num_DNS_lookup_Tests);
-			free(str1); str1 = NULL;
-			free(str2); str2 = NULL;
-
-			return EXIT_FAILURE;
-		}
-		else {
-			printf("DNS_lookup test %d passed\n", i + 1 + 2);
-		}
+	}else{
+		puts("skiping 3 half automatic DNS tests!");
 	}
-	fclose(log);
 
 	printf("DNS_lookup tests passed (%d out of %d)\n", i, num_DNS_lookup_Tests);
 	total_test_passes += i + 2; total_tests += num_DNS_lookup_Tests + 2;
 
 
 
+	downloader_init();
 
 
+	/* sample file to download: https://raw.githubusercontent.com/RLH-2110/FileDownloaderGH/refs/heads/master/sample.txt*/
+	sresult = download_file("https://raw.githubusercontent.com/RLH-2110/FileDownloaderGH/refs/heads/master/sample.txt",DNS_LIST,443, (uint32*)&out_fileSize ,log);
+	if(sresult == NULL){
+		puts("DOWNLOADING FILE FAILED!");
+	}else{
 
+		fclose(log);
+		log = fopen("./resp.txt","w");
 
+		puts("\n\n\n raw data:");
 
+		for (i = 0; i < out_fileSize; i++)
+		{
+			putc(sresult[i],log);
+			fprintf(stdout,"%02X ", (unsigned char)sresult[i]);
+		}
+		puts("\n");
+	}
+	
+
+	donwloader_cleanup();
+
+	fclose(log);
 	printf("Total tests passed (%d out of %d)\n", total_test_passes, total_tests);
 	puts("TODO: add more tests for invalid inputs.\n");
 

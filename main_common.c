@@ -5,12 +5,14 @@
 #include <time.h>
 #include <errno.h>
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 #include "int.h"
 
 #include "downloader.h"
 #include "DNS_offsets.h"
 #include "defines.h"
-
 
 enum trimState {
 	TS_findDot,
@@ -19,7 +21,160 @@ enum trimState {
 	TS_exit
 };
 
+void downloader_init(void){
+	SSL_library_init();
+    OpenSSL_add_all_algorithms();
+    SSL_load_error_strings();
+}
 
+void donwloader_cleanup(void){
+	EVP_cleanup();
+}
+
+/*
+	searches for a char of an array staring at start_index.
+
+	buff: the buffer to search
+	length: the length of the buffer
+	start_index: at what index the search stats
+	find: the character we want to find
+
+	return:
+		0: there was an error
+		other: the index where the char was found.
+*/
+uint32 htmlResponseToRaw_findInBuff(char* buff, uint32 length, uint32 start_index, char find){
+	uint32 i = start_index;
+
+	while(true){
+		if (i >= length)
+			return 0;
+
+		if (buff[i] == find)
+			return i;
+
+		i++;
+	}
+
+}
+
+/*
+	searches for a string of an array staring at start_index.
+
+	buff: the buffer to search
+	length: the length of the buffer
+	start_index: at what index the search stats
+	find: the string we want to find
+
+	return:
+		0: there was an error
+		other: the index where the char was found.
+*/
+uint32 htmlResponseToRaw_findInBuffStr(char* buff, uint32 length, uint32 start_index, char* find){
+	uint32 strI;
+	uint32 hit;
+	uint32 buffI = start_index;
+
+	while(true){
+		if (buffI >= length)
+			return 0;
+
+		if (buff[buffI] == find[0]){
+			hit = buffI;
+
+			buffI++;
+			strI = 1;
+			while(strI < strlen(find)){
+
+				if (buffI >= length)
+					return 0;
+
+				if (buff[buffI] != find[strI]){
+					break;
+				}
+				strI++;
+				buffI++;
+			}
+
+			if (strI == strlen(find))
+				return hit;
+		}
+
+		buffI++;
+	}
+
+}
+
+char* httpResponseToRaw(char* buff, uint32 length, uint32* out_size,FILE* log){
+	uint32 i;
+	uint32 i2;
+	uint32 size;
+	char* retbuff;
+
+	if (out_size == NULL){
+		putslog("out_size cant be null");
+		return NULL;
+	}
+	*out_size = 0;
+
+	if (buff == NULL){
+		putslog("buff cant be null in htmlResponseToRaw");
+		return NULL;
+	}
+
+	/* try to find "OK" */
+	i = htmlResponseToRaw_findInBuff(buff, length,0,'\r');
+	if (i < 2)
+		return NULL;
+	if (buff[i-2] == 'O' && buff[i-1] == 'K'){}else{
+		putslog("HTTPS STATUS WAS NOT OK!");
+		return NULL;
+	}
+
+
+	/*try to find file size*/
+	i = htmlResponseToRaw_findInBuffStr(buff,length,i,"Content-Length: ");
+	if (i == 0){
+		putslog("cant find 'Content-Length: '");
+		return NULL;
+	}
+	i2 = htmlResponseToRaw_findInBuff(buff, length,i,'\r');
+	if (i2 == 0){
+		putslog("cant find 'Content-Length: '");
+		return NULL;
+	}
+	i += strlen("Content-Length: "); /* set i to point where the numbers start.*/
+	buff[i2] = '\0';
+	size = atoi(buff+i);
+
+
+	/* find header end*/
+	i = htmlResponseToRaw_findInBuffStr(buff,length,i,"\r\n\r\n");
+	if (i == 0){
+		putslog("cant find header end");
+		return NULL;
+	}
+	i += strlen("\r\n\r\n");
+
+
+	retbuff = malloc(size);
+	if (retbuff == NULL){
+		putslog("Out of mem!");
+		return NULL;
+	}
+
+	for (i2 = 0; i2 < size;i2++,i++){
+		if (i >= length){
+			putslog("buffer overflow!");
+			free(retbuff);
+			return NULL;
+		}
+		retbuff[i2] = buff[i];
+	}
+
+	*out_size = size;
+	return retbuff;
+}
 
 /*
 	url: the VALID url to parse. this will not fix broken urls

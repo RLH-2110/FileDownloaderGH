@@ -102,6 +102,7 @@
 			id = (uint16)time(NULL);
 			p_url = parse_URL(url);
 			DNS_request = generate_DNS_request(p_url.hostname, id, &request_size, log);
+			free(p_url.hostname);		free(p_url.protocol);		free(p_url.rest); p_url = { NULL, NULL, NULL};
 
 
 			putslog("debug: Trying send...");
@@ -149,7 +150,7 @@
 		return 0;
 	}
 
-	char* download_file(char* url, int32* DNS_LIST, FILE* log){
+	char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize, FILE* log){
 		puts("Not implemented");
 		return NULL;
 	}
