@@ -9,7 +9,7 @@ ldflags =
 # OS FLAGS
 ifeq ($(OS),Windows_NT)
     OSFLAG = -D WINDOWS
-	LDFLAGS = -lws2_32
+	LDFLAGS = -lws2_32 -lsecur32.lib
 $(info    detected windows)
 else
 	OSFLAG = -D POSIX

@@ -24,7 +24,7 @@
 		struct sockaddr_in  server_addr;
 		int ret;
 		unsigned char* DNS_request;
-		parsedUrl p_url;
+		parsedUrl* p_url;
 		uint16 id;
 		int request_size;
 		int sock;
@@ -99,8 +99,8 @@
 
 			id = (uint16)time(NULL);
 			p_url = parse_URL(url);
-			DNS_request = generate_DNS_request(p_url.hostname, id, &request_size, log);
-			free(p_url.hostname);		free(p_url.protocol);		free(p_url.rest); p_url.hostname = NULL; p_url.protocol = NULL; p_url.rest = NULL;
+			DNS_request = generate_DNS_request(p_url->hostname, id, &request_size, log);
+			free(p_url); p_url = NULL;
 
 
 			putslog("debug: Trying send...");
@@ -148,10 +148,23 @@
 		return 0;
 	}
 
-	char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize, FILE* log){
-		puts("Not implemented");
+
+    void downloader_init(void) {
+    }
+
+    void donwloader_cleanup(void) {
+    }
+
+	const char* DOWNLOAD_GET_REQUEST = "GET %s HTTP/1.1\r\n"
+		"Host: %s\r\n"
+		"Connection: close\r\n"
+		"\r\n";
+
+
+	char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize, FILE* log) {
+		puts("not implemented");
 		return NULL;
-	}
+    }
 
 
 #endif

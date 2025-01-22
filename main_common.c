@@ -21,25 +21,6 @@ enum trimState {
 };
 
 
-#ifdef POSIX
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#endif
-
-void downloader_init(void){
-
-#ifdef POSIX
-	SSL_library_init();
-    OpenSSL_add_all_algorithms();
-    SSL_load_error_strings();
-#endif
-}
-
-void donwloader_cleanup(void){
-#ifdef POSIX
-	EVP_cleanup();
-#endif
-}
 
 /*
 	searches for a char of an array staring at start_index.
@@ -196,10 +177,14 @@ char* httpResponseToRaw(char* buff, uint32 length, uint32* out_size,FILE* log){
 
 	THE CALLER MUST FREE THE EVERY STRING IN THE STUCT!!!!
 */
-parsedUrl parse_URL(char* url) {
+parsedUrl* parse_URL(char* url) {
 
 	parsedUrl parsed;
-	parsedUrl returnNull;
+	parsedUrl* ret;
+	uint32 hostnameLen;
+	uint32 protocolLen;
+	uint32 restLen;
+	uint32 i;
 
 	char* normalized_url = NULL;
 	char* rest = NULL;
@@ -212,12 +197,8 @@ parsedUrl parse_URL(char* url) {
 	int state = TS_findDot;
 	currentIndex = 0;
 
-	returnNull.protocol = NULL;
-	returnNull.hostname = NULL;
-	returnNull.rest = NULL;
-
 	if (url == NULL)
-		return returnNull; /* filled with NULL */
+		return NULL; /* filled with NULL */
 
 
 	while (state != TS_exit) {
@@ -226,7 +207,7 @@ parsedUrl parse_URL(char* url) {
 			case TS_findDot:
 			{
 				if (url[currentIndex] == 0)
-					return returnNull; /* filled with NULL */
+					return NULL; /* filled with NULL */
 
 				if (url[currentIndex] != '.') {
 					currentIndex++;
@@ -246,7 +227,7 @@ parsedUrl parse_URL(char* url) {
 			case TS_trimStart:
 			{
 				if (currentIndex < 0)
-					return returnNull; /* filled with NULL */
+					return NULL; /* filled with NULL */
 
 				if (currentIndex == 0)
 					goto TS_trimStart_nextSate;
@@ -272,7 +253,7 @@ parsedUrl parse_URL(char* url) {
 				if (url[currentIndex] == '.') {
 					dots++;
 					if (foundDot == true)
-						return returnNull; /* filled with NULL */ /* invalid url when 2 dots are next to each other. */
+						return NULL; /* filled with NULL */ /* invalid url when 2 dots are next to each other. */
 					foundDot = true;
 				
 					currentIndex++;
@@ -307,63 +288,91 @@ parsedUrl parse_URL(char* url) {
 #define normalizedMallocSsize endIndex + 2 - startIndex 
 	if (dots >= 2) {
 
-		normalized_url = malloc(normalizedMallocSsize);
+		hostnameLen = normalizedMallocSsize;
+		normalized_url = malloc(hostnameLen);
 		if (normalized_url == NULL)
-			return returnNull;
+			return NULL;
 
-		memcpy(normalized_url, url + startIndex, normalizedMallocSsize);
-		normalized_url[normalizedMallocSsize - 1] = 0;
-
-
+		memcpy(normalized_url, url + startIndex, hostnameLen);
+		normalized_url[hostnameLen - 1] = 0;
 
 	}
 	else {
 
-		normalized_url = malloc(normalizedMallocSsize + 4); /* +4 because we need to add www. */
+		hostnameLen = normalizedMallocSsize + 4;
+		normalized_url = malloc(hostnameLen); /* +4 because we need to add www. */
 		if (normalized_url == NULL)
-			return returnNull;
+			return NULL;
 
 		memcpy(normalized_url + 4, url + startIndex, normalizedMallocSsize); /* +4 because www. is missing*/
 		normalized_url[0] = 'w';
 		normalized_url[1] = 'w';
 		normalized_url[2] = 'w';
 		normalized_url[3] = '.';
-		normalized_url[normalizedMallocSsize + 4 - 1] = 0;
-
+		normalized_url[hostnameLen - 1] = 0;
+		
 
 
 	}
 
 	/* fix protocol */
 	if (startIndex - 3 > 0) {
-		protocol = malloc(startIndex - 3 + 1);
+		protocolLen = startIndex - 3 + 1;
+		protocol = malloc(protocolLen);
 		if (protocol == NULL)
-			return returnNull;
+			return NULL;
 
-		memcpy(protocol, url, startIndex - 3);
-		protocol[startIndex - 3] = 0;
+		memcpy(protocol, url, protocolLen - 1);
+		protocol[protocolLen - 1] = 0;
+		
 	}
 	else {
 		/* allocated, so we can just free it, instead of worring what happends if we free memory that we never allocated*/
-		protocol = malloc(6);
+		protocolLen = 6;
+		protocol = malloc(protocolLen);
 		if (protocol == NULL)
-			return returnNull;
+			return NULL;
 		protocol[0] = 'h'; protocol[1] = 't'; protocol[2] = 't'; protocol[3] = 'p'; protocol[4] = 's'; protocol[5] = 0;
-
+		
 	}
 
-	rest = malloc(strlen(url) + 1 - endIndex);
+	restLen = strlen(url) + 1 - endIndex;
+	rest = malloc(restLen);
 	if (rest == NULL)
-		return returnNull;
-	memcpy(rest, url + endIndex + 1, strlen(url) + 1 - endIndex);
-	rest[strlen(url) - endIndex] = 0;
-
-	parsed.protocol = protocol;
-	parsed.hostname = normalized_url;
-	parsed.rest = rest;
+		return NULL;
+	memcpy(rest, url + endIndex + 1, restLen);
+	rest[restLen - 1] = 0;
 
 
-	return parsed;
+
+
+	// build some sort of area that contains the struct and all the stuff that belongs to it.
+	ret = malloc(sizeof(parsedUrl) + protocolLen+ hostnameLen+ restLen + 1);
+	((char*)ret)[sizeof(parsedUrl) + protocolLen+ hostnameLen+ restLen] = 0x12;
+
+	i = sizeof(parsedUrl);
+	ret->protocol = ((char*)ret) + i;
+	memcpy(ret->protocol, protocol,protocolLen);
+
+	i += protocolLen;
+	ret->hostname = ((char*)ret) + i;
+	memcpy(ret->hostname, normalized_url, hostnameLen);
+
+	i += hostnameLen;
+	ret->rest = ((char*)ret) + i;
+	memcpy(ret->rest, rest, restLen);
+
+	free(protocol); protocol = NULL;
+	free(normalized_url); normalized_url = NULL;
+	free(rest); rest = NULL;
+
+	if (((char*)ret)[sizeof(parsedUrl) + protocolLen+ hostnameLen+ restLen] != 0X12) {
+		puts("OOPS: memory corruption in parse_URL");
+		free(ret);
+		return NULL;
+	}
+
+	return ret;
 
 }
 

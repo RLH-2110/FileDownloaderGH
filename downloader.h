@@ -54,13 +54,11 @@ typedef struct parsedUrl {
 /* 
 	url: the url to split into its components
 
-	returns a parsedUrl struct from the url (example: spliting https://pubs.opengroup.org/onlinepubs/007904975/basedefs/sys/socket.h.html into https, pubs.opengroup.org, /onlinepubs/007904975/basedefs/sys/socket.h.html 
-	this is just a char* srting or NULL if there was an error
+	returns a pointer to a parsedUrl struct from the url (example: spliting https://pubs.opengroup.org/onlinepubs/007904975/basedefs/sys/socket.h.html into https, pubs.opengroup.org, /onlinepubs/007904975/basedefs/sys/socket.h.html 
 
-	THE CALLER MUST FREE THE FIELDS OF THE STRUCT!!
+	THE CALLER MUST FREE THE struct, NEVER free the fields of the struct. they belong to the same memory as the struct. (some arena thing)
 */
-parsedUrl parse_URL(char* url);
-
+parsedUrl* parse_URL(char* url);
 
 /*
 	buff: buffer to the raw http response

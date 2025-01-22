@@ -41,7 +41,7 @@ const char NSLOOKUP_STR[] = "nslookup ";
 
 
 int main(int argc, char** argv){
-	parsedUrl result;
+	parsedUrl* result;
 	char* sresult;
 	int i;
 	int nresult;
@@ -66,32 +66,49 @@ int main(int argc, char** argv){
 	for (i = 0; i < num_parse_URL_Tests;i++) {
 		result = parse_URL(testUrls[i]);
 
-		if (compare(result.hostname, expectedHostname[i]) != 0) {
-			printf("parse_URL test %dA (hostname) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedHostname[i]),got(result.hostname));
+		if (result == NULL) {
+			if (expectedHostname[i] == NULL) {
+				printf("parse_URL test %d passed\n", i + 1);
+				continue;
+			}
+			else {
+				printf("parse_URL test %d failed\nexpected data\nbut got NULL\n", i + 1);
+				printf("test passed (%d out of %d)\n", i + 1, num_parse_URL_Tests);
+				return EXIT_FAILURE;
+			}
+		}
+		else {
+			if (expectedHostname[i] == NULL) {
+				printf("parse_URL test %d failed\nexpected NULL\nbut got data\n", i + 1);
+				printf("test passed (%d out of %d)\n", i + 1, num_parse_URL_Tests);
+				return EXIT_FAILURE;
+			}
+		}
+
+		if (compare(result->hostname, expectedHostname[i]) != 0) {
+			printf("parse_URL test %dA (hostname) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedHostname[i]),got(result->hostname));
 			printf("test passed (%d out of %d)\n", i + 1, num_parse_URL_Tests);
 			return EXIT_FAILURE;
 		}
 		else { printf("parse_URL test %dA passed\n",i+1); }
 
 		/* test 1B */
-		if (compare(result.protocol, expectedProtocol[i]) != 0) {
-			printf("parse_URL test %dB (protocol) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedProtocol[i]),got(result.protocol));
+		if (compare(result->protocol, expectedProtocol[i]) != 0) {
+			printf("parse_URL test %dB (protocol) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedProtocol[i]),got(result->protocol));
 			printf("test passed (%d out of %d)\n", i + 1, num_parse_URL_Tests);
 			return EXIT_FAILURE;
 		}
 		else { printf("parse_URL test %dB passed\n",i+1); }
 
 		/* test 1C */
-		if (compare(result.rest, expectedRest[i]) != 0) {
-			printf("parse_URL test %dC (rest) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedRest[i]),got(result.rest));
+		if (compare(result->rest, expectedRest[i]) != 0) {
+			printf("parse_URL test %dC (rest) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedRest[i]),got(result->rest));
 			printf("test passed (%d out of %d)\n", i+1, num_parse_URL_Tests);
 			return EXIT_FAILURE;
 		}
 		else { printf("parse_URL test %dC passed\n",i+1); }
 
-		free(result.protocol);	result.protocol = NULL;
-		free(result.hostname);	result.hostname = NULL;
-		free(result.rest);		result.rest = NULL;
+		free(result); result = NULL;
 
 	}
 

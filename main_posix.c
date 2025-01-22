@@ -25,6 +25,16 @@
 #include <sys/time.h>
 
 
+void downloader_init(void) {
+	SSL_library_init();
+	OpenSSL_add_all_algorithms();
+	SSL_load_error_strings();
+}
+
+void donwloader_cleanup(void) {
+	EVP_cleanup();
+}
+
 
 int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 
@@ -34,7 +44,7 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 	struct sockaddr_in server_addr;
 	int ret;
 	unsigned char* DNS_request;
-	parsedUrl p_url;
+	parsedUrl* p_url;
 	uint16 id;
 	int request_size;
 	int sock;
@@ -99,8 +109,8 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 
 		id = (uint16)time(NULL);
 		p_url = parse_URL(url);
-		DNS_request = generate_DNS_request(p_url.hostname, id, &request_size, log);
-		free(p_url.hostname);		free(p_url.protocol);		free(p_url.rest); p_url.hostname = NULL; p_url.protocol = NULL; p_url.rest = NULL;
+		DNS_request = generate_DNS_request(p_url->hostname, id, &request_size, log);
+		free(p_url); p_url = NULL;
 		if (DNS_request == NULL){
 			putslog("URL Parseing error");
 			return 0;
@@ -156,7 +166,7 @@ const char* DOWNLOAD_GET_REQUEST = "GET %s HTTP/1.1\r\n"
              "\r\n";
 
 char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize, FILE* log){
-	parsedUrl p_url;
+	parsedUrl* p_url;
 	int32 ipv4;
 	struct timeval tv;
 	struct sockaddr_in server_addr;
@@ -210,16 +220,17 @@ char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize
 	p_url = parse_URL(url);
 	
 
-	if (p_url.rest == NULL || p_url.hostname == NULL){
+	if (p_url->rest == NULL || p_url->hostname == NULL){
 		putslog("URL Parseing error");
 		SSL_CTX_free(ctx);
+		free(p_url); p_url = NULL;
 		return NULL;
 	}
 
 	bufflen = strlen(DOWNLOAD_GET_REQUEST) + strlen(p_url.hostname) + strlen(p_url.rest) + 1;
 	buff = malloc(bufflen);
 	if (buff == NULL){
-		free(p_url.hostname);		free(p_url.protocol);		free(p_url.rest);p_url.hostname = NULL; p_url.protocol = NULL; p_url.rest = NULL;
+		free(p_url); p_url = NULL;
 		SSL_CTX_free(ctx);
 		putslog("Out of memory!");
 		return NULL;
@@ -229,7 +240,7 @@ char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize
 	if (sock < 0) {
     	perrorlog("socket failed");
     	SSL_CTX_free(ctx);
-    	free(p_url.hostname);		free(p_url.protocol);		free(p_url.rest); p_url.hostname = NULL; p_url.protocol = NULL; p_url.rest = NULL;
+		free(p_url); p_url = NULL;
     	return NULL;
 	}
 
@@ -238,7 +249,7 @@ char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize
 	tv.tv_usec = 500000; /* this is in microseconds and equals to 500 ms) */
 	if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) != 0){
 		perrorlog("setting socket timeout failed");
-		free(p_url.hostname);		free(p_url.protocol);		free(p_url.rest); p_url.hostname = NULL; p_url.protocol = NULL; p_url.rest = NULL;
+		free(p_url); p_url = NULL;
 		SSL_CTX_free(ctx);
 		close(sock);
 		return NULL;
@@ -256,12 +267,12 @@ char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize
 		perrorlog("connect failed");
 		SSL_CTX_free(ctx);
 		close(sock);
-		free(p_url.hostname);		free(p_url.protocol);		free(p_url.rest); p_url.hostname = NULL; p_url.protocol = NULL; p_url.rest = NULL;
+		free(p_url); p_url = NULL;;
 		return NULL;
 	}
 
-	sprintf(buff,DOWNLOAD_GET_REQUEST,p_url.rest,p_url.hostname); /* generate the get request */
-	free(p_url.hostname);		free(p_url.protocol);		free(p_url.rest); p_url.hostname = NULL; p_url.protocol = NULL; p_url.rest = NULL;
+	sprintf(buff,DOWNLOAD_GET_REQUEST,p_url->rest,p_url->hostname); /* generate the get request */
+	free(p_url); p_url = NULL;
 
 
 
