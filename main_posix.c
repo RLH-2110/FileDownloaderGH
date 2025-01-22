@@ -1,3 +1,5 @@
+
+#ifdef POSIX
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,8 +16,6 @@
 #include "DNS_offsets.h"
 #include "defines.h"
 
-
-#ifdef POSIX
 
 /*  https://pubs.opengroup.org/onlinepubs/007904975/basedefs/sys/socket.h.html */
 #include <sys/socket.h>

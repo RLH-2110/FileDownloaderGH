@@ -262,7 +262,7 @@ int main(int argc, char** argv){
 				free(str1); str1 = NULL;
 
 				
-				puts("plese enter the result of the nslookup: ");
+				puts("plese enter the last ipv4 result of the nslookup: ");
 				tmp = ipv4Input(); /* tmp containts the number we comprae against*/
 			}else{
 				tmp = 0; /* tmp containts the number we comprae against*/

@@ -5,8 +5,7 @@
 #include <time.h>
 #include <errno.h>
 
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+
 
 #include "int.h"
 
@@ -21,14 +20,25 @@ enum trimState {
 	TS_exit
 };
 
+
+#ifdef POSIX
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#endif
+
 void downloader_init(void){
+
+#ifdef POSIX
 	SSL_library_init();
     OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
+#endif
 }
 
 void donwloader_cleanup(void){
+#ifdef POSIX
 	EVP_cleanup();
+#endif
 }
 
 /*
@@ -583,6 +593,7 @@ int32 DNS_parse_reply(unsigned char* DNS_response, int16 id, int recv_len, FILE*
 	
 	printflog("DNS has %d answers\n",dns_answers);
 
+	puts("remove this debug code");
 	putslog("respone: ");
 	for (i = 0; i < 1024; i++)
 	{
@@ -617,7 +628,7 @@ int32 DNS_parse_reply(unsigned char* DNS_response, int16 id, int recv_len, FILE*
 		/* skip though the name */
 		while(DNS_response[i] != 0){
 			
-			if (DNS_response[i] & 0xC000){ /* pointer */
+			if (DNS_response[i] & 0xC0){ /* pointer */
 				i++;
 				break;
 			}else

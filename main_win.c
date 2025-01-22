@@ -1,19 +1,17 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#include <time.h>
-#include <errno.h>
-
-#include "int.h"
-
-#include "downloader.h"
-#include "DNS_offsets.h"
-#include "defines.h"
-
-
-
 #ifdef WINDOWS
+	#include <stdlib.h>
+	#include <stdio.h>
+	#include <string.h>
+
+	#include <time.h>
+	#include <errno.h>
+
+	#include "int.h"
+
+	#include "downloader.h"
+	#include "DNS_offsets.h"
+	#include "defines.h"
+
 
 	#include <winsock2.h>
 	#include <windows.h>
@@ -102,7 +100,7 @@
 			id = (uint16)time(NULL);
 			p_url = parse_URL(url);
 			DNS_request = generate_DNS_request(p_url.hostname, id, &request_size, log);
-			free(p_url.hostname);		free(p_url.protocol);		free(p_url.rest); p_url = { NULL, NULL, NULL};
+			free(p_url.hostname);		free(p_url.protocol);		free(p_url.rest); p_url.hostname = NULL; p_url.protocol = NULL; p_url.rest = NULL;
 
 
 			putslog("debug: Trying send...");

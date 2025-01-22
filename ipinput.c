@@ -70,7 +70,7 @@ void get_input(char* buff, size_t lengh, FILE* steam) {
 	buff[lengh - 1] = '\0';
 }
 
-int8 octetInput(void) {
+uint8 octetInput(void) {
 
 
 	char buff[oI_buffsize];
