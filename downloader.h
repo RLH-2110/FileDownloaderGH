@@ -156,7 +156,7 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log);
 
 	returns the ip if one could be found otherwhise it returns 0
 */
-int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log);
+int32 DNS_parse_reply(unsigned char* DNS_response, int16 id, int recv_len, FILE* log);
 
 
 /* turns the ip address to a string.

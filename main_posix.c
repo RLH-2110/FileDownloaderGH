@@ -33,7 +33,7 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 	struct timeval tv;
 	struct sockaddr_in server_addr;
 	int ret;
-	char* DNS_request;
+	unsigned char* DNS_request;
 	parsedUrl p_url;
 	uint16 id;
 	int request_size;
@@ -135,7 +135,6 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 		}
 
 		putslog("got a response!");
-
 
 		ip = DNS_parse_reply(DNS_request, id, recv_len, log);
 		free(DNS_request);

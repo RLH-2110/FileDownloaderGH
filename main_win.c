@@ -25,7 +25,7 @@
 		DWORD tv;
 		struct sockaddr_in  server_addr;
 		int ret;
-		char* DNS_request;
+		unsigned char* DNS_request;
 		parsedUrl p_url;
 		uint16 id;
 		int request_size;

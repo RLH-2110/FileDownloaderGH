@@ -518,7 +518,7 @@ enum DNS_lookup_state {
 	DLS_found
 };
 
-int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log){
+int32 DNS_parse_reply(unsigned char* DNS_response, int16 id, int recv_len, FILE* log){
 
 	uint16 dns_answers;
 	int dns_answers_index;
@@ -529,14 +529,13 @@ int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log){
 	uint32 ip_address;
 	uint16 dns_questions;
 
-
-
 	flags = DNS_construct_flags(DNS_response[DNS_HEADER_FLAGS_OFFSET],DNS_response[DNS_HEADER_FLAGS_OFFSET+1]);
 
 	/* check if the ID is the same */
-	if (DNS_response[DNS_HEADER_ID_OFFSET] != (char)((id & 0xFF00)>>8) || DNS_response[DNS_HEADER_ID_OFFSET+1] != (char)(id & 0xFF)){
+	if (DNS_response[DNS_HEADER_ID_OFFSET] != (unsigned char)((id & 0xFF00)>>8) || DNS_response[DNS_HEADER_ID_OFFSET+1] != (unsigned char)(id & 0xFF)){
 
-		printf("\nresponse upper:\t %d\n excpected upper:\n %d\n\nresponse lower:\t %d\nexpected lower:\t %d\n",DNS_response[DNS_HEADER_ID_OFFSET],((id & 0xFF00)>>8),DNS_response[DNS_HEADER_ID_OFFSET+1],(id & 0xFF));
+		if (log != NULL)
+			fprintf(log,"\nresponse upper:\t %d\nexcpected upper:\n %d\n\nresponse lower:\t %d\nexpected lower:\t %d\n",DNS_response[DNS_HEADER_ID_OFFSET],((id & 0xFF00)>>8),DNS_response[DNS_HEADER_ID_OFFSET+1],(id & 0xFF));
 
 		putslog("The IDs not match!");
 		return 0;
@@ -593,8 +592,6 @@ int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log){
 
 	i = DNS_HEADER_SIZE; /* this should now point at the first byte of the DNS response */
 
-
-
 	/* handle if the server returns dns questions */
 	dns_questions = DNS_response[DNS_HEADER_QDCOUNT_OFFSET+1] + (DNS_response[DNS_HEADER_QDCOUNT_OFFSET] << 8);
 
@@ -639,6 +636,7 @@ int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log){
 		
 		rdlength = DNS_response[i+1] | (DNS_response[i] << 8); i += 2;
 
+
 		if (state == DLS_skipping || rdlength != 4){ /* we are either not interested in the data, or the data is NOT a ipv4*/
 			i += rdlength;
 		}else{
@@ -648,6 +646,7 @@ int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log){
 			ip_address |= (DNS_response[i+2] <<  8);
 			ip_address |= (DNS_response[i+1] << 16);
 			ip_address |= (DNS_response[i+0] << 24);
+
 
 			return ip_address;
 		}
