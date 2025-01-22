@@ -179,7 +179,6 @@ char* httpResponseToRaw(char* buff, uint32 length, uint32* out_size,FILE* log){
 */
 parsedUrl* parse_URL(char* url) {
 
-	parsedUrl parsed;
 	parsedUrl* ret;
 	uint32 hostnameLen;
 	uint32 protocolLen;
@@ -346,7 +345,7 @@ parsedUrl* parse_URL(char* url) {
 
 
 
-	// build some sort of area that contains the struct and all the stuff that belongs to it.
+	/* build some sort of area that contains the struct and all the stuff that belongs to it. */
 	ret = malloc(sizeof(parsedUrl) + protocolLen+ hostnameLen+ restLen + 1);
 	((char*)ret)[sizeof(parsedUrl) + protocolLen+ hostnameLen+ restLen] = 0x12;
 
@@ -440,12 +439,12 @@ char* getQNAME(char* hostname){
 	
 	returns: byte array with the dns request (CALLER MUST FREE IT!)
 */
-char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log) {
+unsigned char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log) {
 
 	uint16 dns_flags;
 	int request_index;
 	char* qname;
-	char* request;
+	unsigned char* request;
 
 #define ADJUSTED_REQUEST_SIZE RQEUEST_SIZE + strlen(hostname) + 2
 

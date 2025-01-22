@@ -209,8 +209,8 @@ typedef int bool;
 	test_DNSreq1
 };
 
- char expectedDNSreqprint[] = "ID: 56130\nQDCOUNT: 1\nANCOUNT: 0\nNSCOUNT: 0\nARCOUNT: 0\nFLAGS:\n\tQR: 0\n\tOpcode: 0\n\tAA: 0\n\tTC: 0\n\tRD: 1\n\tRA: 0\n\tZ: 0\n\tRCODE: 0\nQNAME: 3www12northeastern3edu\nQTYPE: 1\nQCLASS: 1\n";
- char* expectedDNSRequestPrints[num_DNSREQPRINT_Tests] = {
+ unsigned char expectedDNSreqprint[] = "ID: 56130\nQDCOUNT: 1\nANCOUNT: 0\nNSCOUNT: 0\nARCOUNT: 0\nFLAGS:\n\tQR: 0\n\tOpcode: 0\n\tAA: 0\n\tTC: 0\n\tRD: 1\n\tRA: 0\n\tZ: 0\n\tRCODE: 0\nQNAME: 3www12northeastern3edu\nQTYPE: 1\nQCLASS: 1\n";
+ unsigned char* expectedDNSRequestPrints[num_DNSREQPRINT_Tests] = {
 	expectedDNSreqprint
 };
 

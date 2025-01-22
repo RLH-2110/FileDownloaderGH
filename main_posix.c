@@ -227,7 +227,7 @@ char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize
 		return NULL;
 	}
 
-	bufflen = strlen(DOWNLOAD_GET_REQUEST) + strlen(p_url.hostname) + strlen(p_url.rest) + 1;
+	bufflen = strlen(DOWNLOAD_GET_REQUEST) + strlen(p_url->hostname) + strlen(p_url->rest) + 1;
 	buff = malloc(bufflen);
 	if (buff == NULL){
 		free(p_url); p_url = NULL;
@@ -405,3 +405,4 @@ char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize
 /* POSIX */
 #endif
 
+typedef int make_iso_compiler_happy;

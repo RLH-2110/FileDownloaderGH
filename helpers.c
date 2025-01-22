@@ -100,7 +100,7 @@ char* debug_get_printable_qname(char* qname) {
 
 
 
-char* debug_get_printable_DNS_request(char* request) {
+char* debug_get_printable_DNS_request(unsigned char* request) {
 
 	char* result;
 	int request_index;
@@ -132,7 +132,7 @@ char* debug_get_printable_DNS_request(char* request) {
 	arcount	= (request[10]<< 8) + request[11];
 
 	request_index = DNS_QUESTION_OFFSET;
-	qname = debug_get_printable_qname(request+request_index);
+	qname = debug_get_printable_qname((char*)(request+request_index));
 
 	for (;request[request_index] != 0;request_index++) {
 		/* just wait till we hit the NULL terminator for the QNAME*/

@@ -82,7 +82,7 @@ char* httpResponseToRaw(char* buff, uint32 length, uint32* out_size,FILE* log);
 
 	returns: byte array with the dns request (CALLER MUST FREE IT!)
 */
-char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log);
+unsigned char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log);
 
 
 
@@ -124,7 +124,7 @@ char* debug_get_printable_qname(char* qname);
 	returns the qname, but the length values are written in ascii
 	you are expected to free the pointer!
 */
-char* debug_get_printable_DNS_request(char* request);
+char* debug_get_printable_DNS_request(unsigned char* request);
 
 /* comprased two DNS requests
 	returns 0 if they are not equal.

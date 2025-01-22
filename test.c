@@ -43,6 +43,7 @@ const char NSLOOKUP_STR[] = "nslookup ";
 int main(int argc, char** argv){
 	parsedUrl* result;
 	char* sresult;
+	unsigned char* usresult;
 	int i;
 	int nresult;
 	char* str1;
@@ -166,7 +167,7 @@ int main(int argc, char** argv){
 	for (i = 0; i < num_DNSREQPRINT_Tests;i++) {
 		sresult = debug_get_printable_DNS_request(test_DNSRequestPrints[i]);
 
-		if (compare(sresult, expectedDNSRequestPrints[i]) != 0) {
+		if (compare((char*)sresult, (char*)expectedDNSRequestPrints[i]) != 0) {
 			printf("debug_get_printable_DNS_request test %d failed\nexpected:\n%s\n\ngot:\n%s\n", i + 1, expectedDNSRequestPrints[i], sresult);
 			printf("test passed (%d out of %d)\n", i + 1, num_DNSREQPRINT_Tests);
 			return EXIT_FAILURE;
@@ -185,22 +186,22 @@ int main(int argc, char** argv){
 
 	/* generate_DNS_request(); */
 	for (i = 0; i < num_DNSREQ_Tests;i++) {
-		sresult = generate_DNS_request(test_DNSreq_hostnames[i], DNSREQ_test_ID,&size, stderr);
+		usresult = generate_DNS_request(test_DNSreq_hostnames[i], DNSREQ_test_ID,&size, stderr);
 
 		if (size != expectedDNSRequestSize[i]) {
 			printf("generate_DNS_request test %d failed\nexpected size:\n%d\ngot:\n%d\n", i + 1, expectedDNSRequestSize[i], size);
 			printf("test passed (%d out of %d)\n", i + 1, num_DNSREQ_Tests);
 			return EXIT_FAILURE;
 		}
-		else if (compare_DNS_requests(sresult, expectedDNSRequest[i]) == 0) {
-			printf("generate_DNS_request test %d failed\nexpected:\n%s\ngot:\n%s\n", i + 1, debug_get_printable_DNS_request(expectedDNSRequest[i]), debug_get_printable_DNS_request(sresult));
+		else if (compare_DNS_requests(usresult, expectedDNSRequest[i]) == 0) {
+			printf("generate_DNS_request test %d failed\nexpected:\n%s\ngot:\n%s\n", i + 1, debug_get_printable_DNS_request(expectedDNSRequest[i]), debug_get_printable_DNS_request(usresult));
 			printf("test passed (%d out of %d)\n", i + 1, num_DNSREQ_Tests);
 			return EXIT_FAILURE;
 		}
 		else {
 			printf("generate_DNS_request test %d passed\n", i + 1);
 		}
-		free(sresult); sresult = NULL;
+		free(usresult); usresult = NULL;
 	}
 
 	printf("generate_DNS_request tests passed (%d out of %d)\n", i, num_DNSREQ_Tests);
