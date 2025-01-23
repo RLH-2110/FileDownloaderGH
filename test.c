@@ -37,8 +37,10 @@ void* malloc_oom(size_t size) {
 }
 
 int32 ipv4Input(void);
+bool compare_files(const char* file1, const char* file2);
 
 const char NSLOOKUP_STR[] = "nslookup ";
+
 
 
 int main(int argc, char** argv){
@@ -53,6 +55,7 @@ int main(int argc, char** argv){
 	int32* DNS_LIST;
 	int32 iPresult;
 	FILE* log;
+	FILE* dwl;
 	int total_test_passes;
 	int total_tests;
 	int32 tmp;
@@ -281,7 +284,7 @@ int main(int argc, char** argv){
 				free(str1); str1 = NULL;
 
 				
-				puts("plese enter the last ipv4 result of the nslookup: ");
+				printf("(skip this type of test by passing any argument to %s)\nplese enter the first or last ipv4 result of the nslookup: ",argv[0]);
 				tmp = ipv4Input(); /* tmp containts the number we comprae against*/
 			}else{
 				tmp = 0; /* tmp containts the number we comprae against*/
@@ -314,36 +317,101 @@ int main(int argc, char** argv){
 	downloader_init();
 
 
-	/* sample file to download: https://raw.githubusercontent.com/RLH-2110/FileDownloaderGH/refs/heads/master/sample.txt*/
-	usresult = download_file("https://raw.githubusercontent.com/RLH-2110/FileDownloaderGH/refs/heads/master/sample.txt",DNS_LIST,443, (uint32*)&out_fileSize ,log);
-	if(usresult == NULL){
-		puts("DOWNLOADING FILE FAILED!");
-	}else{
+	/* download_file() */
+	dwl = NULL;
 
-		fclose(log);
-		log = fopen("./resp.txt","w");
+	for (i = 0; i < num_donwloader_Tests;i++) {
+		out_fileSize = 0;
+		usresult = download_file(downloader_test_urls[i],DNS_LIST,443, (uint32*)&out_fileSize ,log);
 
-		puts("\n\n\n raw data:");
-
-		for (i = 0; i < out_fileSize; i++)
-		{
-			putc(sresult[i],log);
-			fprintf(stdout,"%02X ", (unsigned char)sresult[i]);
+		if (usresult == NULL) {
+			if (downloader_test_urls[i] == NULL){
+				printf("download_file test %d passed\n", i + 1);
+				continue;
+			}else{
+				printf("download_file null test %d failed\nexpected: data\nbut got NULL\n", i + 1);
+				printf("test passed (%d out of %d)\n", i + 1, num_donwloader_Tests);
+				return EXIT_FAILURE;
+			}
 		}
-		puts("\n");
+		
+		if (out_fileSize != expected_filesize[i]){
+			printf("download_file filesize test %d failed\nexpected: %d\n\ngot: %d\n", i + 1, expected_filesize[i], out_fileSize);
+			printf("test passed (%d out of %d)\n", i + 1, num_donwloader_Tests);
+			return EXIT_FAILURE;
+		}
+
+		dwl = fopen("./resp.txt","w");
+		if (dwl == NULL){
+			printf("FILE WRITE ERROR!!");
+			return EXIT_FAILURE;
+		}
+		for (tmp = 0; tmp < out_fileSize; tmp++)
+			putc(usresult[tmp],dwl);
+		fclose(dwl); dwl = NULL;
+
+		printf("file written\n");
+
+		if (compare_files("resp.txt",compareFileAgainst[i]) == false){
+			printf("download_file content test %d failed\n inspect resp.txt and %s to see the difference.\n", i + 1, compareFileAgainst[i]);
+			printf("test passed (%d out of %d)\n", i + 1, num_donwloader_Tests);
+			return EXIT_FAILURE;
+		}
+
+		printf("download_file test %d passed\n", i + 1);
+		
+		free(usresult); usresult = NULL;
 	}
-	
+
+	printf("download_file tests passed (%d out of %d)\n", i, num_donwloader_Tests);
+	total_test_passes += i; total_tests += num_donwloader_Tests;
 
 	donwloader_cleanup();
+
 
 	fclose(log);
 	printf("Total tests passed (%d out of %d)\n", total_test_passes, total_tests);
 	puts("TODO: add more tests for invalid inputs.\n");
 
-	return 0;
+	return EXIT_SUCCESS;
 } 
 
 
 
 
+bool compare_files(const char* file1, const char* file2) {
+    int ch1, ch2;
+    bool equal = true;
+    FILE* fp1 = fopen(file1, "rb");
+    FILE* fp2 = fopen(file2, "rb");
 
+	printf("comparing files...\n");
+
+    if (!fp1 || !fp2) {
+        if (fp1) fclose(fp1);
+        if (fp2) fclose(fp2);
+        return false;
+    }
+
+    while (true) {
+        ch1 = fgetc(fp1);
+        ch2 = fgetc(fp2);
+
+        if (ch1 != ch2) {
+        	printf("%c and %c are not equal!\n",ch1,ch2);
+            equal = false;
+            break;
+        }
+
+        printf("%c and %c equal!\n",ch1,ch2);
+
+        if (ch1 == EOF || ch2 == EOF) {
+            break;
+        }
+    }
+
+    fclose(fp1);
+    fclose(fp2);
+
+    return equal == true && ch1 == EOF && ch2 == EOF; /* Ensure both files ended together */
+}

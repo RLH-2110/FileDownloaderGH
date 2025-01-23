@@ -32,7 +32,14 @@ parsedUrl* parse_URL(char* url);
 */
 unsigned char* httpResponseToRaw(unsigned char* buff, uint32 length, uint32* out_size,FILE* log);
 
+/*
+	buff: buffer to the raw http response
+	length: lenght of the buffer
+	log: optional log file, can be set to NULL
 
+	return: returns the size of the content that we expect or 0 on error
+*/
+uint32 httpResponseGetContentSize(unsigned char* buff, uint32 length,FILE* log);
 
 /* takes in a hostname and returns the DNS reqeust to resolve the hostname
 

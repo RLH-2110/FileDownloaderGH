@@ -24,10 +24,13 @@ all:
 	$(gcc) -g $(files_stage2) $(output) -o test.o $(LDFLAGS) $(OSFLAG)
 	
 
-PHONY: clear clean run
+PHONY: clear clean run skip
 
 run: all
 	./test.o
+
+skip: all
+	./test.o skip
 
 clear: clean
 clean:

@@ -174,7 +174,6 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 	int ret;
 	int sock;
 	unsigned char* buff;
-	unsigned char* oldbuff;
 	int32 bufflen;
 	int32 total_writen;
 	size_t bytes_read;
@@ -313,30 +312,55 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 
 	putslog("trying to receive...");
 
-    bufflen = 4096 * 5;
-    bufflen = 1048576;
+    bufflen = 1024;
 	buff = malloc(bufflen);
 	if (buff == NULL){
 		putslog("Out of memory");
-		close(sock);
+        SSL_free(ssl);
+        close(sock);
+        SSL_CTX_free(ctx);
 		return NULL;
 	}
 
 
 
+	
+
+	/* get http header */
+	SSL_read_ex(ssl, buff, bufflen, &bytes_read);
+
+	bufflen = httpResponseGetContentSize(buff, bytes_read,log);
+	printf("allocating space for %d elements\n",bufflen);
+
+	free(buff); buff = NULL;
+	buff = malloc(bufflen);
+	if (buff == NULL){
+		putslog("Out of memory");
+        SSL_free(ssl);
+        close(sock);
+        SSL_CTX_free(ctx);
+		return NULL;
+	}
+
 	total_writen = 0;
 
-    while (SSL_read_ex(ssl, buff + total_writen, bufflen - total_writen, &bytes_read) == 1) {
+    while (bufflen - total_writen > 0){
+    	if (SSL_read_ex(ssl, buff + total_writen, bufflen - total_writen, &bytes_read) != 1){
+    		puts("some ssl error happened");
+    		break;
+    	}
 
     	if(bytes_read == 0)
     		break;
 
-    	if(bufflen < total_writen + bytes_read){
-    		total_writen += bytes_read;
+    	if(bufflen < total_writen + bytes_read){ 
+    		putslog("overflow avoided!");
     		break;
     	}
 
         total_writen += bytes_read;
+        if (log)
+        	fprintf(log,"%d bytes read. %d left.\n",total_writen, bufflen - total_writen);
     }
 
     if (total_writen <= 0) {
@@ -349,15 +373,15 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
         return NULL;
     }
 
-
+    *out_fileSize = bufflen;
 
     SSL_free(ssl);
     close(sock);
     SSL_CTX_free(ctx);
 
-    oldbuff = buff;
+    /*oldbuff = buff;
     buff = httpResponseToRaw(buff, total_writen, out_fileSize, log);
-    free(oldbuff);
+    free(oldbuff);*/
 
 	return buff;
 }

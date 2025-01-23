@@ -167,6 +167,33 @@ unsigned char* httpResponseToRaw(unsigned char* buff, uint32 length, uint32* out
 	return retbuff;
 }
 
+
+uint32 httpResponseGetContentSize(unsigned char* buff, uint32 length,FILE* log){
+	uint32 i = 0;
+	uint32 i2 = 0;
+
+	if (buff == NULL){
+		putslog("buff cant be null in httpResponseGetContentSize");
+		return 0;
+	}
+
+	/*try to find file size*/
+	i = htmlResponseToRaw_findInBuffStr(buff,length,i,"Content-Length: ");
+	if (i == 0){
+		putslog("cant find 'Content-Length: '");
+		return 0;
+	}
+	i2 = htmlResponseToRaw_findInBuff(buff, length,i,'\r');
+	if (i2 == 0){
+		putslog("cant find 'Content-Length: '");
+		return 0;
+	}
+	i += strlen("Content-Length: "); /* set i to point where the numbers start.*/
+	buff[i2] = '\0';
+	return atoi((char*)(buff+i));
+}
+
+
 /*
 	url: the VALID url to parse. this will not fix broken urls
 	do not use leading or tailing dots

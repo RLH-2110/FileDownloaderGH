@@ -243,5 +243,21 @@ char* expected_strIPs[num_IPv4ToString_Tests] = { "0.2.3.255", "255.255.255.255"
 char* test_DNS_lookups[num_DNS_lookup_Tests] = { "www.google.com", "github.com", "raw.githubusercontent.com" , "", NULL}; /* we do not test more cases, since they are undefined behavior and not my problem*/
 bool find_expected_DNS_lookups[num_DNS_lookup_Tests] = { true, true, true, false, false};
 
+
+#define num_donwloader_Tests 3
+char downloader_test_url1[] = "https://raw.githubusercontent.com/RLH-2110/FileDownloaderGH/refs/heads/master/sample.txt";
+char downloader_test_url2[] = "https://raw.githubusercontent.com/RLH-2110/FileDownloaderGH/refs/heads/master/img_sample.png";
+
+
+char* downloader_test_urls[num_donwloader_Tests] = { 
+		NULL, 
+		downloader_test_url1,
+	 	downloader_test_url2
+};
+
+uint32 expected_filesize[num_donwloader_Tests] = {0,78,1289240};
+char* compareFileAgainst[num_donwloader_Tests] = {"","sample.txt","img_sample.png"};
+
+
 /*included_downloader_h*/
 #endif
