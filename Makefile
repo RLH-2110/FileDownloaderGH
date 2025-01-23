@@ -37,3 +37,6 @@ clean:
 	rm -f $(output)
 	rm -f $(cleanup)
 	rm -f $(ofiles)
+	rm -f ./resp.txt
+	rm -f ./log.txt
+	
