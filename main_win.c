@@ -8,6 +8,7 @@
 
 	#include "int.h"
 
+	#include "downloader_internal.h"
 	#include "downloader.h"
 	#include "DNS_offsets.h"
 	#include "defines.h"

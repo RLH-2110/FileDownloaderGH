@@ -1,4 +1,5 @@
 #include "downloader.h"
+#include "downloader_internal.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -120,11 +121,11 @@ int main(int argc, char** argv){
 
 	/* getQNAME(); */
 	for (i = 0; i < num_QNAME_Tests;i++) {
-		sresult = getQNAME(testHostnames[i]);
+		usresult = getQNAME(testHostnames[i]);
 
-		if (compare(sresult, expectedQNAME[i]) != 0) {
+		if (compare((char*)usresult, (char*)expectedQNAME[i]) != 0) {
 			str1 = debug_get_printable_qname(expectedQNAME[i]);
-			str2 = debug_get_printable_qname(sresult);
+			str2 = debug_get_printable_qname(usresult);
 			printf("getQNAME test %d failed\nexpected: %s\ngot: %s\n",i+1, str1,str2);
 			printf("test passed (%d out of %d)\n", i + 1, num_QNAME_Tests);
 			free(str1);	free(str2); str1 = NULL; str2 = NULL;
@@ -132,7 +133,7 @@ int main(int argc, char** argv){
 		}
 		else { printf("getQNAME test %d passed\n",i+1); }
 
-		free(sresult); sresult = NULL;
+		free(usresult); usresult = NULL;
 	}
 
 	printf("getQNAME tests passed (%d out of %d)\n", i,num_QNAME_Tests);
@@ -314,8 +315,8 @@ int main(int argc, char** argv){
 
 
 	/* sample file to download: https://raw.githubusercontent.com/RLH-2110/FileDownloaderGH/refs/heads/master/sample.txt*/
-	sresult = download_file("https://raw.githubusercontent.com/RLH-2110/FileDownloaderGH/refs/heads/master/sample.txt",DNS_LIST,443, (uint32*)&out_fileSize ,log);
-	if(sresult == NULL){
+	usresult = download_file("https://raw.githubusercontent.com/RLH-2110/FileDownloaderGH/refs/heads/master/sample.txt",DNS_LIST,443, (uint32*)&out_fileSize ,log);
+	if(usresult == NULL){
 		puts("DOWNLOADING FILE FAILED!");
 	}else{
 

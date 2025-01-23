@@ -4,7 +4,7 @@
 #include "defines.h"
 #include "int.h"
 #include "getc.h"
-#include "downloader.h"
+#include "downloader_internal.h"
 
 #define oI_buffsize 4
 

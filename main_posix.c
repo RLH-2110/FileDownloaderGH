@@ -12,6 +12,7 @@
 
 #include "int.h"
 
+#include "downloader_internal.h"
 #include "downloader.h"
 #include "DNS_offsets.h"
 #include "defines.h"
@@ -165,15 +166,15 @@ const char* DOWNLOAD_GET_REQUEST = "GET %s HTTP/1.1\r\n"
              "Connection: close\r\n"
              "\r\n";
 
-char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize, FILE* log){
+unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize, FILE* log){
 	parsedUrl* p_url;
 	int32 ipv4;
 	struct timeval tv;
 	struct sockaddr_in server_addr;
 	int ret;
 	int sock;
-	char* buff;
-	char* oldbuff;
+	unsigned char* buff;
+	unsigned char* oldbuff;
 	int32 bufflen;
 	int32 total_writen;
 	size_t bytes_read;
@@ -271,7 +272,7 @@ char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize
 		return NULL;
 	}
 
-	sprintf(buff,DOWNLOAD_GET_REQUEST,p_url->rest,p_url->hostname); /* generate the get request */
+	sprintf((char*)buff,DOWNLOAD_GET_REQUEST,p_url->rest,p_url->hostname); /* generate the get request */
 	free(p_url); p_url = NULL;
 
 
@@ -349,48 +350,7 @@ char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize
     }
 
 
- /* Read response */
-/*
-    while (SSL_read_ex(ssl, buff, bufflen - total_writen, &bytes_read) == 1) {
 
-    	if(bytes_read == 0)
-    		break;
-
-    	if(bufflen < total_writen + bytes_read){
-    		total_writen += bytes_read;
-    		break;
-    	}
-
-    	/* moar space*/
-
-/*    	oldbuff = buff;
-    	bufflen = bufflen * 1.3; /* increase buff by 30%*/
-/*    	buff = realloc(buff,bufflen);
-
-    	if (buff == NULL)
-    	{
-    		free(oldbuff); bufflen = 0; oldbuff = NULL; buff = NULL;
-    		 SSL_free(ssl);
-		    close(sock);
-		    SSL_CTX_free(ctx);
-    		putslog("Out of memory");
-    		return NULL;
-    	}
-    	oldbuff = NULL;
-
-        total_writen += bytes_read;
-    }
-
-    if (total_writen <= 0) {
-        if (log != NULL)
-        	ERR_print_errors_fp(stderr);
-        free(buff); bufflen = 0; buff = NULL;
-        SSL_free(ssl);
-        close(sock);
-        SSL_CTX_free(ctx);
-        return NULL;
-    }
-*/
     SSL_free(ssl);
     close(sock);
     SSL_CTX_free(ctx);

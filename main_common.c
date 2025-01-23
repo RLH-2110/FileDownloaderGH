@@ -9,7 +9,7 @@
 
 #include "int.h"
 
-#include "downloader.h"
+#include "downloader_internal.h"
 #include "DNS_offsets.h"
 #include "defines.h"
 
@@ -34,7 +34,7 @@ enum trimState {
 		0: there was an error
 		other: the index where the char was found.
 */
-uint32 htmlResponseToRaw_findInBuff(char* buff, uint32 length, uint32 start_index, char find){
+uint32 htmlResponseToRaw_findInBuff(unsigned char* buff, uint32 length, uint32 start_index, char find){
 	uint32 i = start_index;
 
 	while(true){
@@ -61,7 +61,7 @@ uint32 htmlResponseToRaw_findInBuff(char* buff, uint32 length, uint32 start_inde
 		0: there was an error
 		other: the index where the char was found.
 */
-uint32 htmlResponseToRaw_findInBuffStr(char* buff, uint32 length, uint32 start_index, char* find){
+uint32 htmlResponseToRaw_findInBuffStr(unsigned char* buff, uint32 length, uint32 start_index, char* find){
 	uint32 strI;
 	uint32 hit;
 	uint32 buffI = start_index;
@@ -96,11 +96,11 @@ uint32 htmlResponseToRaw_findInBuffStr(char* buff, uint32 length, uint32 start_i
 
 }
 
-char* httpResponseToRaw(char* buff, uint32 length, uint32* out_size,FILE* log){
+unsigned char* httpResponseToRaw(unsigned char* buff, uint32 length, uint32* out_size,FILE* log){
 	uint32 i;
 	uint32 i2;
 	uint32 size;
-	char* retbuff;
+	unsigned char* retbuff;
 
 	if (out_size == NULL){
 		putslog("out_size cant be null");
@@ -136,7 +136,7 @@ char* httpResponseToRaw(char* buff, uint32 length, uint32* out_size,FILE* log){
 	}
 	i += strlen("Content-Length: "); /* set i to point where the numbers start.*/
 	buff[i2] = '\0';
-	size = atoi(buff+i);
+	size = atoi((char*)(buff+i));
 
 
 	/* find header end*/
@@ -384,14 +384,14 @@ parsedUrl* parse_URL(char* url) {
 
 	more detail in the header
 */
-char* getQNAME(char* hostname){
+unsigned char* getQNAME(char* hostname){
 
-	char* qname;
+	unsigned char* qname;
 
 	uint8 length ;
-	char* section_curr;
-	char* qname_current;
-	char* qname_lentgh;
+	unsigned char* section_curr;
+	unsigned char* qname_current;
+	unsigned char* qname_lentgh;
 
 	qname = malloc(strlen(hostname)+2); /* the "dots" will be replaced by numbers. ie. www.google.de -> 3www6google2de0  for the first and last one we have to add 2 bytes. */
 	if (qname == NULL)
@@ -400,7 +400,7 @@ char* getQNAME(char* hostname){
 	length = 0;
 	qname_current = qname + 1;
 	qname_lentgh = qname;
-	section_curr = hostname;
+	section_curr = (unsigned char*)hostname;
 
 	while(*section_curr != 0){
 
@@ -443,17 +443,17 @@ unsigned char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* 
 
 	uint16 dns_flags;
 	int request_index;
-	char* qname;
+	unsigned char* qname;
 	unsigned char* request;
 
 #define ADJUSTED_REQUEST_SIZE RQEUEST_SIZE + strlen(hostname) + 2
 
 	*size = ADJUSTED_REQUEST_SIZE;
-	request = malloc(ADJUSTED_REQUEST_SIZE + 1); /* add the lentgh of the hostname, since that is dynamic. add 2 because the qname adds 2 more bytes */
+	request = malloc(ADJUSTED_REQUEST_SIZE + 1); /* to the RQEUEST_SIZE, the macro adds the lentgh of the hostname, since that is dynamic. add 2 because the qname adds 2 more bytes */
 	if (request == NULL)
 		return NULL;
 
-	request[ADJUSTED_REQUEST_SIZE] = (char)0xAA;
+	request[ADJUSTED_REQUEST_SIZE] = (unsigned char)0xAA;
 	
 
 	/*  /------------\
@@ -503,7 +503,7 @@ unsigned char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* 
 
 
 /* the null terminator is important, since it signals the end of the qname */
-#define qnameLen (strlen(qname)+1)
+#define qnameLen (strlen((char*)qname)+1)
 	qname = getQNAME(hostname);
 	
 	request_index = DNS_QUESTION_OFFSET; 
@@ -523,7 +523,7 @@ unsigned char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* 
 	request[request_index+2] = 0;
 	request[request_index+3] = 1;
 
-	if(request[ADJUSTED_REQUEST_SIZE] != (char)0xAA) {
+	if(request[ADJUSTED_REQUEST_SIZE] != (unsigned char)0xAA) {
 		putslog("OOPS, I might have corupted memory in generate_DNS_request. Exiting progamm...");
 		exit(EXIT_FAILURE);
 	}

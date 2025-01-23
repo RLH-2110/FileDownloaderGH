@@ -4,7 +4,7 @@
 
 #include "int.h"
 
-#include "downloader.h"
+#include "downloader_internal.h"
 #include "DNS_offsets.h"
 #include "defines.h"
 
@@ -41,7 +41,7 @@ char* IPv4ToStringR(int32 ip){
 	return IPv4ToString(neoIP);
 }
 
-char* debug_get_printable_qname(char* qname) {
+char* debug_get_printable_qname(unsigned char* qname) {
 
 	char* result;
 	int state = 0;
@@ -62,7 +62,7 @@ char* debug_get_printable_qname(char* qname) {
 		return result;
 	}
 
-	mallocOrExit(result, strlen(qname) * 3);
+	mallocOrExit(result, strlen((char*)qname) * 3);
 	resultp = result;
 	mallocOrExit(buff, 4);
 
@@ -132,7 +132,7 @@ char* debug_get_printable_DNS_request(unsigned char* request) {
 	arcount	= (request[10]<< 8) + request[11];
 
 	request_index = DNS_QUESTION_OFFSET;
-	qname = debug_get_printable_qname((char*)(request+request_index));
+	qname = debug_get_printable_qname(request+request_index);
 
 	for (;request[request_index] != 0;request_index++) {
 		/* just wait till we hit the NULL terminator for the QNAME*/
@@ -172,7 +172,7 @@ char* debug_get_printable_DNS_request(unsigned char* request) {
 
 
 
-int compare_DNS_requests(char* requestA, char* requestB) {
+int compare_DNS_requests(unsigned char* requestA, unsigned char* requestB) {
 	int index = 0;
 
 	if (requestA == NULL && requestB == NULL) {
