@@ -403,8 +403,6 @@ bool compare_files(const char* file1, const char* file2) {
             break;
         }
 
-        printf("%c and %c equal!\n",ch1,ch2);
-
         if (ch1 == EOF || ch2 == EOF) {
             break;
         }
