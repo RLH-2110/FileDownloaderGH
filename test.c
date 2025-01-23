@@ -398,7 +398,7 @@ bool compare_files(const char* file1, const char* file2) {
         ch2 = fgetc(fp2);
 
         if (ch1 != ch2) {
-        	printf("%c and %c are not equal!\n",ch1,ch2);
+        	printf("%c (%02x) and %c (%02x) are not equal!\n",ch1,ch1,ch2,ch2);
             equal = false;
             break;
         }
