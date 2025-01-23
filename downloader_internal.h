@@ -22,15 +22,6 @@ typedef struct parsedUrl {
 */
 parsedUrl* parse_URL(char* url);
 
-/*
-	buff: buffer to the raw http response
-	length: lenght of the buffer
-	out_size: the size of the output buffer
-	log: optional log file, can be set to NULL
-
-	return: NULL on error, buffer with only the file content on success
-*/
-unsigned char* httpResponseToRaw(unsigned char* buff, uint32 length, uint32* out_size,FILE* log);
 
 /*
 	buff: buffer to the raw http response
