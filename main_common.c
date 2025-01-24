@@ -24,6 +24,7 @@ enum trimState {
 
 /*
 	searches for a char of an array staring at start_index.
+	due to the error handleing, you can not find out if anything exist at index 0
 
 	buff: the buffer to search
 	length: the length of the buffer
@@ -34,7 +35,7 @@ enum trimState {
 		0: there was an error
 		other: the index where the char was found.
 */
-uint32 htmlResponseToRaw_findInBuff(unsigned char* buff, uint32 length, uint32 start_index, char find){
+uint32 htmlResponse_findInBuff(unsigned char* buff, uint32 length, uint32 start_index, char find){
 	uint32 i = start_index;
 
 	while(true){
@@ -51,6 +52,7 @@ uint32 htmlResponseToRaw_findInBuff(unsigned char* buff, uint32 length, uint32 s
 
 /*
 	searches for a string of an array staring at start_index.
+	due to the error handleing, you can not find out if anything exist at index 0
 
 	buff: the buffer to search
 	length: the length of the buffer
@@ -61,7 +63,7 @@ uint32 htmlResponseToRaw_findInBuff(unsigned char* buff, uint32 length, uint32 s
 		0: there was an error
 		other: the index where the char was found.
 */
-uint32 htmlResponseToRaw_findInBuffStr(unsigned char* buff, uint32 length, uint32 start_index, char* find){
+uint32 htmlResponse_findInBuffStr(unsigned char* buff, uint32 length, uint32 start_index, char* find){
 	uint32 strI;
 	uint32 hit;
 	uint32 buffI = start_index;
@@ -106,12 +108,12 @@ uint32 httpResponseGetContentSize(unsigned char* buff, uint32 length,FILE* log){
 	}
 
 	/*try to find file size*/
-	i = htmlResponseToRaw_findInBuffStr(buff,length,i,"Content-Length: ");
+	i = htmlResponse_findInBuffStr(buff,length,i,"Content-Length: ");
 	if (i == 0){
 		putslog("cant find 'Content-Length: '");
 		return 0;
 	}
-	i2 = htmlResponseToRaw_findInBuff(buff, length,i,'\r');
+	i2 = htmlResponse_findInBuff(buff, length,i,'\r');
 	if (i2 == 0){
 		putslog("cant find 'Content-Length: '");
 		return 0;
@@ -128,9 +130,9 @@ uint32 httpResponseGetContentSize(unsigned char* buff, uint32 length,FILE* log){
 
 	returns an struct that turns the url into 3 parts. 
 		for example this url: https://pubs.opengroup.org/onlinepubs/007904975/basedefs/sys/socket.h.html would be split into https   ,   pubs.opengroup.org     and     /onlinepubs/007904975/basedefs/sys/socket.h.html
-	it will return an array filled with NULL if there was an errror.
+	it will return NULL if there was an errror.
 
-	THE CALLER MUST FREE THE EVERY STRING IN THE STUCT!!!!
+	THE CALLER MUST FREE THE STUCT!!!!
 */
 parsedUrl* parse_URL(char* url) {
 
@@ -321,7 +323,7 @@ parsedUrl* parse_URL(char* url) {
 	free(rest); rest = NULL;
 
 	if (((char*)ret)[sizeof(parsedUrl) + protocolLen+ hostnameLen+ restLen] != 0X12) {
-		puts("OOPS: memory corruption in parse_URL");
+		puts("DEBUG: OOPS: memory corruption in parse_URL");
 		free(ret);
 		return NULL;
 	}
