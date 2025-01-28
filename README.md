@@ -1,6 +1,9 @@
-This *will* be a library able to download files from a URL. 
+# FileDownloaderGH
+This is a library able to download files from a URL.  
+It has only been tested with files hosted on GitHub, and the project is not entirely done.  
+It's usable right now, but I advise against using it at its current state.
   
-## dependencies
+## Dependencies
 
 You need to have a 64 bit version of OpenSSL installed.
 
@@ -25,6 +28,8 @@ if you don't have make installed, try `sudo apt install make`
 #### Windows
 
 you can either use the Linux subsystem for Windows or MinGW, I will add links to both later.
+
+## Q&A
 
 ### Why do it manually and not use a library? 
 
