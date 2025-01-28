@@ -107,6 +107,12 @@
 			DNS_request = generate_DNS_request(p_url->hostname, id, &request_size, log);
 			free(p_url); p_url = NULL;
 
+			if (DNS_request == NULL) {
+				putslog("DNS Request could not be generated");
+				closesocket(sock);
+				WSACleanup();
+				return 0;
+			}
 
 			putslog("debug: Trying send...");
 
@@ -173,6 +179,7 @@
 		int ret;
 		int sock;
 		unsigned char* buff;
+		unsigned char* oldbuff;
 		int32 bufflen;
 		int32 total_writen;
 		size_t bytes_read;
@@ -180,6 +187,9 @@
 		SSL* ssl;
 		const SSL_METHOD* method = TLS_client_method();
 		WSADATA wsaData;
+		uint32 i;
+		uint32 content_start_index;
+		uint8 matches;
 
 		putslog("calling download_file");
 
@@ -322,7 +332,7 @@
 
 		putslog("trying to receive...");
 
-		bufflen = 1024;
+		bufflen = 4096;
 		buff = malloc(bufflen);
 		if (buff == NULL) {
 			putslog("Out of memory");
@@ -333,17 +343,69 @@
 			return NULL;
 		}
 
+		i = 0;
+		total_writen = 0;
+		matches = 0;
+		while(true){
+	
+			/* get http header */
+			if (SSL_read_ex(ssl, buff + total_writen, bufflen - total_writen, &bytes_read) != 1) {
+				putslog("some ssl error happened");
+
+				download_file_cleanup_1:
+				SSL_free(ssl);
+				closesocket(sock);
+				WSACleanup();
+				SSL_CTX_free(ctx);
+				return NULL;
+			}
+
+			if (bytes_read == 0) {
+				putslog("header not found");
+				goto download_file_cleanup_1;
+			}
+
+			if (bufflen < total_writen + bytes_read) {
+				putslog("overflow avoided!");
+				goto download_file_cleanup_1;
+			}
+
+			total_writen += bytes_read;
+			if (log)
+				fprintf(log, "%d bytes read. while searching for the header\n", total_writen);
+
+			for (;i < total_writen;i++) {
+				if ((matches & 1) == 0) { 
+					if (buff[i] == '\r')
+						matches++;
+					else
+						matches = 0;
+				}
+				else {
+					if (buff[i] == '\n')
+						matches++;
+					else
+						matches = 0;
+				}
+
+				if (matches >= 4)
+					break;
+			}
+
+			if (matches >= 4) /* if we found the end of the header*/
+				break;
+		}
+
+		content_start_index = i + 1;
 
 
 
-
-		/* get http header */
-		SSL_read_ex(ssl, buff, bufflen, &bytes_read);
 
 		bufflen = httpResponseGetContentSize(buff, bytes_read, log);
 		printf("allocating space for %d elements\n", bufflen);
 
-		free(buff); buff = NULL;
+		
+		oldbuff = buff;
 		buff = malloc(bufflen);
 		if (buff == NULL) {
 			putslog("Out of memory");
@@ -354,11 +416,17 @@
 			return NULL;
 		}
 
-		total_writen = 0;
+
+		/* copy over existing context, if we have any*/
+		if (content_start_index < total_writen) 
+			memcpy(buff, oldbuff + content_start_index, total_writen - content_start_index);
+		free(oldbuff); oldbuff = NULL;
+
+		total_writen = total_writen - content_start_index;
 
 		while (bufflen - total_writen > 0) {
 			if (SSL_read_ex(ssl, buff + total_writen, bufflen - total_writen, &bytes_read) != 1) {
-				puts("some ssl error happened");
+				putslog("some ssl error happened");
 				break;
 			}
 

@@ -312,7 +312,11 @@ int main(int argc, char** argv){
 	printf("DNS_lookup tests passed (%d out of %d)\n", i, num_DNS_lookup_Tests);
 	total_test_passes += i + 2; total_tests += num_DNS_lookup_Tests + 2;
 
-
+	dwl = fopen("./resp.txt", "wb");
+	if (dwl == NULL) {
+		printf("FILE WRITE ERROR!!");
+		return EXIT_FAILURE;
+	}
 
 	downloader_init();
 
@@ -341,7 +345,7 @@ int main(int argc, char** argv){
 			return EXIT_FAILURE;
 		}
 
-		dwl = fopen("./resp.txt","w");
+		dwl = fopen("./resp.txt","wb");
 		if (dwl == NULL){
 			printf("FILE WRITE ERROR!!");
 			return EXIT_FAILURE;

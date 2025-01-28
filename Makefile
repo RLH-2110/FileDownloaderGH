@@ -7,8 +7,8 @@ cleanup = test.o log.txt
 ldflags =
 
 # for windows only
-windowsSLLIncludePath = C:/Program\ Files/OpenSSL-Win64/include/
-windowsSLLLibs = C:/Program\ Files/OpenSSL-Win64/lib/VC/x64/MT/
+windowsSLLIncludePath = "C:/Program Files/OpenSSL-Win64/include"
+windowsSLLLibs = "C:/Program Files/OpenSSL-Win64/lib/VC/x64/MT"
 
 # OS FLAGS
 ifeq ($(OS),Windows_NT)
