@@ -5,12 +5,13 @@
 #include <time.h>
 #include <errno.h>
 
+
+
 #include "int.h"
 
-#include "downloader.h"
+#include "downloader_internal.h"
 #include "DNS_offsets.h"
 #include "defines.h"
-
 
 enum trimState {
 	TS_findDot,
@@ -22,19 +23,124 @@ enum trimState {
 
 
 /*
+	searches for a char of an array staring at start_index.
+	due to the error handleing, you can not find out if anything exist at index 0
+
+	buff: the buffer to search
+	length: the length of the buffer
+	start_index: at what index the search stats
+	find: the character we want to find
+
+	return:
+		0: there was an error
+		other: the index where the char was found.
+*/
+uint32 htmlResponse_findInBuff(unsigned char* buff, uint32 length, uint32 start_index, char find){
+	uint32 i = start_index;
+
+	while(true){
+		if (i >= length)
+			return 0;
+
+		if (buff[i] == find)
+			return i;
+
+		i++;
+	}
+
+}
+
+/*
+	searches for a string of an array staring at start_index.
+	due to the error handleing, you can not find out if anything exist at index 0
+
+	buff: the buffer to search
+	length: the length of the buffer
+	start_index: at what index the search stats
+	find: the string we want to find
+
+	return:
+		0: there was an error
+		other: the index where the char was found.
+*/
+uint32 htmlResponse_findInBuffStr(unsigned char* buff, uint32 length, uint32 start_index, char* find){
+	uint32 strI;
+	uint32 hit;
+	uint32 buffI = start_index;
+
+	while(true){
+		if (buffI >= length)
+			return 0;
+
+		if (buff[buffI] == find[0]){
+			hit = buffI;
+
+			buffI++;
+			strI = 1;
+			while(strI < strlen(find)){
+
+				if (buffI >= length)
+					return 0;
+
+				if (buff[buffI] != find[strI]){
+					break;
+				}
+				strI++;
+				buffI++;
+			}
+
+			if (strI == strlen(find))
+				return hit;
+		}
+
+		buffI++;
+	}
+
+}
+
+uint32 httpResponseGetContentSize(unsigned char* buff, uint32 length,FILE* log){
+	uint32 i = 0;
+	uint32 i2 = 0;
+
+	if (buff == NULL){
+		putslog("buff cant be null in httpResponseGetContentSize");
+		return 0;
+	}
+
+	/*try to find file size*/
+	i = htmlResponse_findInBuffStr(buff,length,i,"Content-Length: ");
+	if (i == 0){
+		putslog("cant find 'Content-Length: '");
+		return 0;
+	}
+	i2 = htmlResponse_findInBuff(buff, length,i,'\r');
+	if (i2 == 0){
+		putslog("cant find 'Content-Length: '");
+		return 0;
+	}
+	i += strlen("Content-Length: "); /* set i to point where the numbers start.*/
+	buff[i2] = '\0';
+	return atoi((char*)(buff+i));
+}
+
+
+/*
 	url: the VALID url to parse. this will not fix broken urls
 	do not use leading or tailing dots
 
 	returns an struct that turns the url into 3 parts. 
 		for example this url: https://pubs.opengroup.org/onlinepubs/007904975/basedefs/sys/socket.h.html would be split into https   ,   pubs.opengroup.org     and     /onlinepubs/007904975/basedefs/sys/socket.h.html
-	it will return an array filled with NULL if there was an errror.
+	it will return NULL if there was an errror.
 
-	THE CALLER MUST FREE THE EVERY STRING IN THE STUCT!!!!
+	THE CALLER MUST FREE THE STUCT!!!!
 */
-parsedUrl parse_URL(char* url) {
+parsedUrl* parse_URL(char* url) {
 
-	parsedUrl parsed;
-	parsedUrl returnNull;
+	parsedUrl* ret;
+	uint32 hostnameLen;
+	uint32 protocolLen;
+	uint32 restLen;
+	uint32 i;
 
 	char* normalized_url = NULL;
 	char* rest = NULL;
@@ -47,12 +153,8 @@ parsedUrl parse_URL(char* url) {
 	int state = TS_findDot;
 	currentIndex = 0;
 
-	returnNull.protocol = NULL;
-	returnNull.hostname = NULL;
-	returnNull.rest = NULL;
-
 	if (url == NULL)
-		return returnNull; /* filled with NULL */
+		return NULL; /* filled with NULL */
 
 
 	while (state != TS_exit) {
@@ -61,7 +163,7 @@ parsedUrl parse_URL(char* url) {
 			case TS_findDot:
 			{
 				if (url[currentIndex] == 0)
-					return returnNull; /* filled with NULL */
+					return NULL; /* filled with NULL */
 
 				if (url[currentIndex] != '.') {
 					currentIndex++;
@@ -81,7 +183,7 @@ parsedUrl parse_URL(char* url) {
 			case TS_trimStart:
 			{
 				if (currentIndex < 0)
-					return returnNull; /* filled with NULL */
+					return NULL; /* filled with NULL */
 
 				if (currentIndex == 0)
 					goto TS_trimStart_nextSate;
@@ -107,7 +209,7 @@ parsedUrl parse_URL(char* url) {
 				if (url[currentIndex] == '.') {
 					dots++;
 					if (foundDot == true)
-						return returnNull; /* filled with NULL */ /* invalid url when 2 dots are next to each other. */
+						return NULL; /* filled with NULL */ /* invalid url when 2 dots are next to each other. */
 					foundDot = true;
 				
 					currentIndex++;
@@ -142,63 +244,91 @@ parsedUrl parse_URL(char* url) {
 #define normalizedMallocSsize endIndex + 2 - startIndex 
 	if (dots >= 2) {
 
-		normalized_url = malloc(normalizedMallocSsize);
+		hostnameLen = normalizedMallocSsize;
+		normalized_url = malloc(hostnameLen);
 		if (normalized_url == NULL)
-			return returnNull;
+			return NULL;
 
-		memcpy(normalized_url, url + startIndex, normalizedMallocSsize);
-		normalized_url[normalizedMallocSsize - 1] = 0;
-
-
+		memcpy(normalized_url, url + startIndex, hostnameLen);
+		normalized_url[hostnameLen - 1] = 0;
 
 	}
 	else {
 
-		normalized_url = malloc(normalizedMallocSsize + 4); /* +4 because we need to add www. */
+		hostnameLen = normalizedMallocSsize + 4;
+		normalized_url = malloc(hostnameLen); /* +4 because we need to add www. */
 		if (normalized_url == NULL)
-			return returnNull;
+			return NULL;
 
 		memcpy(normalized_url + 4, url + startIndex, normalizedMallocSsize); /* +4 because www. is missing*/
 		normalized_url[0] = 'w';
 		normalized_url[1] = 'w';
 		normalized_url[2] = 'w';
 		normalized_url[3] = '.';
-		normalized_url[normalizedMallocSsize + 4 - 1] = 0;
-
+		normalized_url[hostnameLen - 1] = 0;
+		
 
 
 	}
 
 	/* fix protocol */
 	if (startIndex - 3 > 0) {
-		protocol = malloc(startIndex - 3 + 1);
+		protocolLen = startIndex - 3 + 1;
+		protocol = malloc(protocolLen);
 		if (protocol == NULL)
-			return returnNull;
+			return NULL;
 
-		memcpy(protocol, url, startIndex - 3);
-		protocol[startIndex - 3] = 0;
+		memcpy(protocol, url, protocolLen - 1);
+		protocol[protocolLen - 1] = 0;
+		
 	}
 	else {
 		/* allocated, so we can just free it, instead of worring what happends if we free memory that we never allocated*/
-		protocol = malloc(6);
+		protocolLen = 6;
+		protocol = malloc(protocolLen);
 		if (protocol == NULL)
-			return returnNull;
+			return NULL;
 		protocol[0] = 'h'; protocol[1] = 't'; protocol[2] = 't'; protocol[3] = 'p'; protocol[4] = 's'; protocol[5] = 0;
-
+		
 	}
 
-	rest = malloc(strlen(url) + 1 - endIndex);
+	restLen = strlen(url) + 1 - endIndex;
+	rest = malloc(restLen);
 	if (rest == NULL)
-		return returnNull;
-	memcpy(rest, url + endIndex + 1, strlen(url) + 1 - endIndex);
-	rest[strlen(url) - endIndex] = 0;
-
-	parsed.protocol = protocol;
-	parsed.hostname = normalized_url;
-	parsed.rest = rest;
+		return NULL;
+	memcpy(rest, url + endIndex + 1, restLen);
+	rest[restLen - 1] = 0;
 
 
-	return parsed;
+
+
+	/* build some sort of area that contains the struct and all the stuff that belongs to it. */
+	ret = malloc(sizeof(parsedUrl) + protocolLen+ hostnameLen+ restLen + 1);
+	((char*)ret)[sizeof(parsedUrl) + protocolLen+ hostnameLen+ restLen] = 0x12;
+
+	i = sizeof(parsedUrl);
+	ret->protocol = ((char*)ret) + i;
+	memcpy(ret->protocol, protocol,protocolLen);
+
+	i += protocolLen;
+	ret->hostname = ((char*)ret) + i;
+	memcpy(ret->hostname, normalized_url, hostnameLen);
+
+	i += hostnameLen;
+	ret->rest = ((char*)ret) + i;
+	memcpy(ret->rest, rest, restLen);
+
+	free(protocol); protocol = NULL;
+	free(normalized_url); normalized_url = NULL;
+	free(rest); rest = NULL;
+
+	if (((char*)ret)[sizeof(parsedUrl) + protocolLen+ hostnameLen+ restLen] != 0X12) {
+		puts("DEBUG: OOPS: memory corruption in parse_URL");
+		free(ret);
+		return NULL;
+	}
+
+	return ret;
 
 }
 
@@ -211,14 +341,14 @@ parsedUrl parse_URL(char* url) {
 
 	more detail in the header
 */
-char* getQNAME(char* hostname){
+unsigned char* getQNAME(char* hostname){
 
-	char* qname;
+	unsigned char* qname;
 
 	uint8 length ;
-	char* section_curr;
-	char* qname_current;
-	char* qname_lentgh;
+	unsigned char* section_curr;
+	unsigned char* qname_current;
+	unsigned char* qname_lentgh;
 
 	qname = malloc(strlen(hostname)+2); /* the "dots" will be replaced by numbers. ie. www.google.de -> 3www6google2de0  for the first and last one we have to add 2 bytes. */
 	if (qname == NULL)
@@ -227,7 +357,7 @@ char* getQNAME(char* hostname){
 	length = 0;
 	qname_current = qname + 1;
 	qname_lentgh = qname;
-	section_curr = hostname;
+	section_curr = (unsigned char*)hostname;
 
 	while(*section_curr != 0){
 
@@ -266,21 +396,21 @@ char* getQNAME(char* hostname){
 	
 	returns: byte array with the dns request (CALLER MUST FREE IT!)
 */
-char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log) {
+unsigned char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log) {
 
 	uint16 dns_flags;
 	int request_index;
-	char* qname;
-	char* request;
+	unsigned char* qname;
+	unsigned char* request;
 
 #define ADJUSTED_REQUEST_SIZE RQEUEST_SIZE + strlen(hostname) + 2
 
 	*size = ADJUSTED_REQUEST_SIZE;
-	request = malloc(ADJUSTED_REQUEST_SIZE + 1); /* add the lentgh of the hostname, since that is dynamic. add 2 because the qname adds 2 more bytes */
+	request = malloc(ADJUSTED_REQUEST_SIZE + 1); /* to the RQEUEST_SIZE, the macro adds the lentgh of the hostname, since that is dynamic. add 2 because the qname adds 2 more bytes */
 	if (request == NULL)
 		return NULL;
 
-	request[ADJUSTED_REQUEST_SIZE] = (char)0xAA;
+	request[ADJUSTED_REQUEST_SIZE] = (unsigned char)0xAA;
 	
 
 	/*  /------------\
@@ -330,7 +460,7 @@ char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log) {
 
 
 /* the null terminator is important, since it signals the end of the qname */
-#define qnameLen (strlen(qname)+1)
+#define qnameLen (strlen((char*)qname)+1)
 	qname = getQNAME(hostname);
 	
 	request_index = DNS_QUESTION_OFFSET; 
@@ -350,7 +480,7 @@ char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log) {
 	request[request_index+2] = 0;
 	request[request_index+3] = 1;
 
-	if(request[ADJUSTED_REQUEST_SIZE] != (char)0xAA) {
+	if(request[ADJUSTED_REQUEST_SIZE] != (unsigned char)0xAA) {
 		putslog("OOPS, I might have corupted memory in generate_DNS_request. Exiting progamm...");
 		exit(EXIT_FAILURE);
 	}
@@ -363,7 +493,7 @@ enum DNS_lookup_state {
 	DLS_found
 };
 
-int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log){
+int32 DNS_parse_reply(unsigned char* DNS_response, int16 id, int recv_len, FILE* log){
 
 	uint16 dns_answers;
 	int dns_answers_index;
@@ -374,14 +504,13 @@ int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log){
 	uint32 ip_address;
 	uint16 dns_questions;
 
-
-
 	flags = DNS_construct_flags(DNS_response[DNS_HEADER_FLAGS_OFFSET],DNS_response[DNS_HEADER_FLAGS_OFFSET+1]);
 
 	/* check if the ID is the same */
-	if (DNS_response[DNS_HEADER_ID_OFFSET] != (char)((id & 0xFF00)>>8) || DNS_response[DNS_HEADER_ID_OFFSET+1] != (char)(id & 0xFF)){
+	if (DNS_response[DNS_HEADER_ID_OFFSET] != (unsigned char)((id & 0xFF00)>>8) || DNS_response[DNS_HEADER_ID_OFFSET+1] != (unsigned char)(id & 0xFF)){
 
-		printf("\nresponse upper:\t %d\n excpected upper:\n %d\n\nresponse lower:\t %d\nexpected lower:\t %d\n",DNS_response[DNS_HEADER_ID_OFFSET],((id & 0xFF00)>>8),DNS_response[DNS_HEADER_ID_OFFSET+1],(id & 0xFF));
+		if (log != NULL)
+			fprintf(log,"\nresponse upper:\t %d\nexcpected upper:\n %d\n\nresponse lower:\t %d\nexpected lower:\t %d\n",DNS_response[DNS_HEADER_ID_OFFSET],((id & 0xFF00)>>8),DNS_response[DNS_HEADER_ID_OFFSET+1],(id & 0xFF));
 
 		putslog("The IDs not match!");
 		return 0;
@@ -429,6 +558,7 @@ int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log){
 	
 	printflog("DNS has %d answers\n",dns_answers);
 
+	puts("remove this debug code");
 	putslog("respone: ");
 	for (i = 0; i < 1024; i++)
 	{
@@ -437,8 +567,6 @@ int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log){
 	putslog("\n");
 
 	i = DNS_HEADER_SIZE; /* this should now point at the first byte of the DNS response */
-
-
 
 	/* handle if the server returns dns questions */
 	dns_questions = DNS_response[DNS_HEADER_QDCOUNT_OFFSET+1] + (DNS_response[DNS_HEADER_QDCOUNT_OFFSET] << 8);
@@ -465,7 +593,7 @@ int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log){
 		/* skip though the name */
 		while(DNS_response[i] != 0){
 			
-			if (DNS_response[i] & 0xC000){ /* pointer */
+			if (DNS_response[i] & 0xC0){ /* pointer */
 				i++;
 				break;
 			}else
@@ -484,6 +612,7 @@ int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log){
 		
 		rdlength = DNS_response[i+1] | (DNS_response[i] << 8); i += 2;
 
+
 		if (state == DLS_skipping || rdlength != 4){ /* we are either not interested in the data, or the data is NOT a ipv4*/
 			i += rdlength;
 		}else{
@@ -493,6 +622,7 @@ int32 DNS_parse_reply(char* DNS_response, int16 id, int recv_len, FILE* log){
 			ip_address |= (DNS_response[i+2] <<  8);
 			ip_address |= (DNS_response[i+1] << 16);
 			ip_address |= (DNS_response[i+0] << 24);
+
 
 			return ip_address;
 		}
