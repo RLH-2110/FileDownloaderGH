@@ -8,6 +8,7 @@
 
 	#include "int.h"
 
+	#include "urlParse/urlParse.h"	
 	#include "downloader_internal.h"
 	#include "downloader.h"
 	#include "DNS_offsets.h"
@@ -232,7 +233,7 @@
 		p_url = parse_URL(url);
 
 
-		if (p_url->rest == NULL || p_url->hostname == NULL) {
+		if (p_url->path == NULL || p_url->hostname == NULL) {
 			putslog("URL Parseing error");
 			SSL_CTX_free(ctx);
 			free(p_url); p_url = NULL;
@@ -240,7 +241,7 @@
 			return NULL;
 		}
 
-		bufflen = strlen(DOWNLOAD_GET_REQUEST) + strlen(p_url->hostname) + strlen(p_url->rest) + 1;
+		bufflen = strlen(DOWNLOAD_GET_REQUEST) + strlen(p_url->hostname) + strlen(p_url->path) + 1;
 		buff = malloc(bufflen);
 		if (buff == NULL) {
 			free(p_url); p_url = NULL;
@@ -289,7 +290,7 @@
 			return NULL;
 		}
 
-		sprintf((char*)buff, DOWNLOAD_GET_REQUEST, p_url->rest, p_url->hostname); /* generate the get request */
+		sprintf((char*)buff, DOWNLOAD_GET_REQUEST, p_url->path, p_url->hostname); /* generate the get request */
 		free(p_url); p_url = NULL;
 
 
@@ -362,11 +363,6 @@
 
 			if (bytes_read == 0) {
 				putslog("header not found");
-				goto download_file_cleanup_1;
-			}
-
-			if (bufflen < total_writen + bytes_read) {
-				putslog("overflow avoided!");
 				goto download_file_cleanup_1;
 			}
 

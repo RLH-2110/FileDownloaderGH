@@ -6,22 +6,8 @@
 
 typedef char uchar;
 
-typedef struct parsedUrl {
-	char* protocol;
-	char* hostname;
-	char* rest;
-} parsedUrl;
-
-
-/* 
-	url: the url to split into its components
-
-	returns a pointer to a parsedUrl struct from the url (example: spliting https://pubs.opengroup.org/onlinepubs/007904975/basedefs/sys/socket.h.html into https, pubs.opengroup.org, /onlinepubs/007904975/basedefs/sys/socket.h.html 
-
-	THE CALLER MUST FREE THE struct, NEVER free the fields of the struct. they belong to the same memory as the struct. (some arena thing)
-*/
-parsedUrl* parse_URL(char* url);
-
+/* internal requirement */
+#include "urlParse/urlParse.h"	
 
 /*
 	buff: buffer to the raw http response

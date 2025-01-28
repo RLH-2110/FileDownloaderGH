@@ -12,6 +12,7 @@
 
 #include "int.h"
 
+#include "urlParse/urlParse.h"	
 #include "downloader_internal.h"
 #include "downloader.h"
 #include "DNS_offsets.h"
@@ -224,14 +225,14 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 	p_url = parse_URL(url);
 	
 
-	if (p_url->rest == NULL || p_url->hostname == NULL){
+	if (p_url->path == NULL || p_url->hostname == NULL){
 		putslog("URL Parseing error");
 		SSL_CTX_free(ctx);
 		free(p_url); p_url = NULL;
 		return NULL;
 	}
 
-	bufflen = strlen(DOWNLOAD_GET_REQUEST) + strlen(p_url->hostname) + strlen(p_url->rest) + 1;
+	bufflen = strlen(DOWNLOAD_GET_REQUEST) + strlen(p_url->hostname) + strlen(p_url->path) + 1;
 	buff = malloc(bufflen);
 	if (buff == NULL){
 		free(p_url); p_url = NULL;
@@ -275,7 +276,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 		return NULL;
 	}
 
-	sprintf((char*)buff,DOWNLOAD_GET_REQUEST,p_url->rest,p_url->hostname); /* generate the get request */
+	sprintf((char*)buff,DOWNLOAD_GET_REQUEST,p_url->path,p_url->hostname); /* generate the get request */
 	free(p_url); p_url = NULL;
 
 

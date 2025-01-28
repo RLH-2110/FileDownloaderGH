@@ -1,7 +1,8 @@
 gcc = gcc -ansi -pedantic -Wall
-files_stage1 = main_*.c helpers.c
-files_stage2 = test.c getc.c ipinput.c
-ofiles := $(files_stage1:.c=.o)
+files_stage1 = main_*.c helpers.c urlParse/urlParse.c
+files_stage2 = tests/test.c tests/getc.c tests/ipinput.c urlParse/urlParse_test.c urlParse/urlParse_testData.c
+#ofiles := $(files_stage1:.c=.o)
+ofiles := $(patsubst %.c,%.o,$(notdir $(files_stage1)))
 output = downloader.a
 cleanup = test.o log.txt
 ldflags =
