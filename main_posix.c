@@ -180,6 +180,9 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 	SSL_CTX* ctx;
 	SSL* ssl;
 	const SSL_METHOD* method = TLS_client_method();
+	uint32 i;
+	uint32 content_start_index;
+	uint8 matches;
 
 	putslog("calling download_file");
 
@@ -312,76 +315,123 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 
 	putslog("trying to receive...");
 
-    bufflen = 1024;
+	bufflen = 4096;
 	buff = malloc(bufflen);
-	if (buff == NULL){
+	if (buff == NULL) {
 		putslog("Out of memory");
-        SSL_free(ssl);
-        close(sock);
-        SSL_CTX_free(ctx);
+		SSL_free(ssl);
+		close(sock);
+		SSL_CTX_free(ctx);
 		return NULL;
 	}
 
-
-
-	
-
-	/* get http header */
-	SSL_read_ex(ssl, buff, bufflen, &bytes_read);
-
-	bufflen = httpResponseGetContentSize(buff, bytes_read,log);
-	printf("allocating space for %d elements\n",bufflen);
-
-	free(buff); buff = NULL;
-	buff = malloc(bufflen);
-	if (buff == NULL){
-		putslog("Out of memory");
-        SSL_free(ssl);
-        close(sock);
-        SSL_CTX_free(ctx);
-		return NULL;
-	}
-
+	i = 0;
 	total_writen = 0;
+	matches = 0;
+	while (true) {
 
-    while (bufflen - total_writen > 0){
-    	if (SSL_read_ex(ssl, buff + total_writen, bufflen - total_writen, &bytes_read) != 1){
-    		puts("some ssl error happened");
-    		break;
-    	}
+		/* get http header */
+		if (SSL_read_ex(ssl, buff + total_writen, bufflen - total_writen, &bytes_read) != 1) {
+			putslog("some ssl error happened");
 
-    	if(bytes_read == 0)
-    		break;
+		download_file_cleanup_1:
+			SSL_free(ssl);
+			close(sock);
+			SSL_CTX_free(ctx);
+			return NULL;
+		}
 
-    	if(bufflen < total_writen + bytes_read){ 
-    		putslog("overflow avoided!");
-    		break;
-    	}
+		if (bytes_read == 0) {
+			putslog("header not found");
+			goto download_file_cleanup_1;
+		}
 
-        total_writen += bytes_read;
-        if (log)
-        	fprintf(log,"%d bytes read. %d left.\n",total_writen, bufflen - total_writen);
-    }
+		total_writen += bytes_read;
+		if (log)
+			fprintf(log, "%d bytes read. while searching for the header\n", total_writen);
 
-    if (total_writen <= 0) {
-        if (log != NULL)
-        	ERR_print_errors_fp(stderr);
-        free(buff); bufflen = 0; buff = NULL;
-        SSL_free(ssl);
-        close(sock);
-        SSL_CTX_free(ctx);
-        return NULL;
-    }
+		for (;i < total_writen;i++) {
+			if ((matches & 1) == 0) {
+				if (buff[i] == '\r')
+					matches++;
+				else
+					matches = 0;
+			}
+			else {
+				if (buff[i] == '\n')
+					matches++;
+				else
+					matches = 0;
+			}
 
-    *out_fileSize = bufflen;
+			if (matches >= 4)
+				break;
+		}
+
+		if (matches >= 4) /* if we found the end of the header*/
+			break;
+	}
+
+	content_start_index = i + 1;
+
+
+	bufflen = httpResponseGetContentSize(buff, bytes_read, log);
+	printf("allocating space for %d elements\n", bufflen);
+
+
+	oldbuff = buff;
+	buff = malloc(bufflen);
+	if (buff == NULL) {
+		putslog("Out of memory");
+		SSL_free(ssl);
+		close(sock);
+		SSL_CTX_free(ctx);
+		return NULL;
+		}
+
+
+	/* copy over existing context, if we have any*/
+	if (content_start_index < total_writen)
+		memcpy(buff, oldbuff + content_start_index, total_writen - content_start_index);
+	free(oldbuff); oldbuff = NULL;
+
+	total_writen = total_writen - content_start_index;
+
+	while (bufflen - total_writen > 0) {
+		if (SSL_read_ex(ssl, buff + total_writen, bufflen - total_writen, &bytes_read) != 1) {
+			putslog("some ssl error happened");
+			break;
+		}
+
+		if (bytes_read == 0)
+			break;
+
+		if (bufflen < total_writen + bytes_read) {
+			putslog("overflow avoided!");
+			break;
+		}
+
+		total_writen += bytes_read;
+		if (log)
+			fprintf(log, "%d bytes read. %d left.\n", total_writen, bufflen - total_writen);
+	}
+
+	if (total_writen <= 0) {
+		if (log != NULL)
+			ERR_print_errors_fp(stderr);
+		free(buff); bufflen = 0; buff = NULL;
+		SSL_free(ssl);
+		closesocket(sock);
+		WSACleanup();
+		SSL_CTX_free(ctx);
+		return NULL;
+	}
+
+	*out_fileSize = bufflen;
 
     SSL_free(ssl);
     close(sock);
     SSL_CTX_free(ctx);
-
-    /*oldbuff = buff;
-    buff = httpResponseToRaw(buff, total_writen, out_fileSize, log);
-    free(oldbuff);*/
 
 	return buff;
 }
