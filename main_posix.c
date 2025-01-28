@@ -174,6 +174,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 	int ret;
 	int sock;
 	unsigned char* buff;
+	unsigned char* oldbuff;
 	int32 bufflen;
 	int32 total_writen;
 	size_t bytes_read;
@@ -421,8 +422,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 			ERR_print_errors_fp(stderr);
 		free(buff); bufflen = 0; buff = NULL;
 		SSL_free(ssl);
-		closesocket(sock);
-		WSACleanup();
+		close(sock);
 		SSL_CTX_free(ctx);
 		return NULL;
 	}
