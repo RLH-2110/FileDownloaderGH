@@ -1,11 +1,12 @@
-gcc = gcc -ansi -pedantic -Wall
+gcc = gcc -ansi -pedantic -Wall -D BITS64
 files_stage1 = main_*.c helpers.c urlParse/urlParse.c
-files_stage2 = tests/test.c tests/getc.c tests/ipinput.c urlParse/urlParse_test.c urlParse/urlParse_testData.c
+files_stage2 = tests/test.c tests/getc.c tests/ipinput.c tests/testing_funcs.c urlParse/urlParse_test.c urlParse/urlParse_testData.c
 #ofiles := $(files_stage1:.c=.o)
 ofiles := $(patsubst %.c,%.o,$(notdir $(files_stage1)))
 output = downloader.a
 cleanup = test.o log.txt
 ldflags =
+warnings = -Wno-long-long
 
 # for windows only
 windowsSLLIncludePath = "C:/Program Files/OpenSSL-Win64/include"
@@ -23,10 +24,10 @@ $(info    assuming posix)
 endif
 
 all:
-	$(gcc) -g $(files_stage1) -c $(LDFLAGS) $(OSFLAG)
+	$(gcc) -g $(files_stage1) -c $(LDFLAGS) $(OSFLAG) $(warnings)
 
 	ar cr $(output) $(ofiles)
-	$(gcc) -g $(files_stage2) $(output) -o test.o $(LDFLAGS) $(OSFLAG)
+	$(gcc) -g $(files_stage2) $(output) -o test.o $(LDFLAGS) $(OSFLAG) $(warnings)
 	
 
 PHONY: clear clean run skip

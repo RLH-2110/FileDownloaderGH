@@ -1,4 +1,5 @@
 #include "../defines.h"
+#include <string.h>
 
 /* zero if equal, non zero if not equal.*/
 int compare(char* a, char* b) {

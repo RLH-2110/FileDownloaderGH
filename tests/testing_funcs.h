@@ -1,6 +1,5 @@
-
-#ifndef compare_defined
-#define compare_defined
+#ifndef included_testing_funcs_h
+#define included_testing_funcs_h
 
 /* zero if equal, non zero if not equal.*/
 int compare(char* a, char* b);
@@ -9,5 +8,5 @@ int compare(char* a, char* b);
 char* got(char* str);
 
 
-/* !compare_defined */
+/* !included_testing_funcs_h */
 #endif

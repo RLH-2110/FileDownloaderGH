@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "testdata.h"
+#include "testing_funcs.h"
 
 #include "../urlParse/urlParse_testData.h"
 

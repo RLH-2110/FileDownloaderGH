@@ -26,7 +26,7 @@ bool test_urlParse(uint32* out_tests_passed, uint32* out_tests_amount, bool prin
 
 #define num_parse_URL_Tests 51
 extern char* testUrls[num_parse_URL_Tests];
-extern expectedHostname[num_parse_URL_Tests];
+extern char* expectedHostname[num_parse_URL_Tests];
 extern char* expectedProtocol[num_parse_URL_Tests];
 extern char* expectedRest[num_parse_URL_Tests];
 extern uint32 expectedPort[num_parse_URL_Tests];
