@@ -20,14 +20,20 @@ typedef struct parsedUrl {
 		or returns NULL if the url was not valid or an error occured.
 
 	errno: 
-		(unchanged) = no error
-		... (TODO)
+		0: no error
+		EINVAL: URL is NULL
+		EOVERFLOW: URL is too long
+		ENOMEM: can not allocate memory for the struct
+
 
 
 	Details:
 	Urls with protocols other than https are considered invalid. so http and ftp are not valid urls for this function. if you leave out the protocol, https is assumed.
 	ipv4 and ipv6 inputs are also invalid.
 	localhost will be interpreted as www.localhost
+	on errors NULL is returned
+	you must use punycode if you want to have urls with unicode, urls with characters not permited in the hosname are considered invalid.
+	user info is NOT supported (somthing like www.abc@user.com).
 
 	if you do not put in stuff like https, or www. then they will be added. i.e. google.de -> https:\\google.de\ before it is validated and split *(the implematiotion is a bit different, but this explaination is easier)
 

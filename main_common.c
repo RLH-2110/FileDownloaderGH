@@ -20,7 +20,7 @@
 
 	buff: the buffer to search
 	length: the length of the buffer
-	start_index: at what index the search stats
+	start_index: at what index the search starts
 	find: the character we want to find
 
 	return:
@@ -48,7 +48,7 @@ uint32 htmlResponse_findInBuff(unsigned char* buff, uint32 length, uint32 start_
 
 	buff: the buffer to search
 	length: the length of the buffer
-	start_index: at what index the search stats
+	start_index: at what index the search starts
 	find: the string we want to find
 
 	return:
