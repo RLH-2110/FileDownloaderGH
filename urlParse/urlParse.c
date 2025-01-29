@@ -72,6 +72,7 @@ uint32 atoui_strict(char* str, uint32 len);
 /* const strings */
 char CONST_HTTPS_STRING[] = "https";
 char CONST_EMPTY_URL_PATH_STRING[] = "/";
+char CONST_WWW_LABEL_STRING[] = "www.";
 
 parsedUrl* parse_URL(char* url) {
 	parsedUrl* ret = NULL;
@@ -106,9 +107,10 @@ parsedUrl* parse_URL(char* url) {
 		i = 0; /*set i to first byte of hostname*/
 	}else{
 
-		if (tmp == strlen(CONST_HTTPS_STRING) + 1){
+		if (tmp == strlen(CONST_HTTPS_STRING)){
 			if (strncmp(url,CONST_HTTPS_STRING,strlen(CONST_HTTPS_STRING)) == 0){
 				protocol = url+0;
+				protocol_lenght = tmp;
 				i = tmp + strlen("://"); /*set i to first byte of hostname*/
 			}
 			else return NULL; /* the protocol is not HTTPS!*/	
@@ -177,8 +179,8 @@ parsedUrl* parse_URL(char* url) {
 
 	while(true){
 
-		if (hostname[i] == '.')
-			return NULL; /* domains cant start with a dot! */
+		if (hostname[i] == '.' || hostname[i] == '-')
+			return NULL; /* labels cant start with a dot or hypen! */
 	    tmp = findInBuff(hostname,hostname_lenght,i,'.');
 
 
@@ -202,13 +204,10 @@ parsedUrl* parse_URL(char* url) {
 	    }
 	    else{ /* tmp != 0*/
 
-	    	if (hostname[tmp-1] == '-')
-				return NULL; /* labels can not end with a hypen! */
-
 	    	if (tmp - i > 63) /* tmp - i = length of the domain/subdomain */
 	    		return NULL;
 	    }
-	    i += tmp + 1;
+	    i = tmp + 1;
 	}
 
 
@@ -279,16 +278,23 @@ parsedUrl* parse_URL(char* url) {
 	else
 		tmp = 0;
 
+	i = 0;
 	#ifdef DEBUG
-		tmp += 1;
+		i = 1;
 	#endif
 
 
+#define parseUrlAlloc_len sizeof(parsedUrl) + protocol_lenght + 1 + hostname_lenght + 1 + tmp + path_lenght + 1 + i
+
 	/* build some sort of area that contains the struct and all the stuff that belongs to it. */
-	ret = malloc(sizeof(parsedUrl) + protocol_lenght+ hostname_lenght + path_lenght + tmp);
-	
+	ret = malloc(parseUrlAlloc_len);
+	if (ret == NULL) {
+		errno = ENOMEM;
+		return NULL;
+	}
+
 	#ifdef DEBUG
-	((char*)ret)[sizeof(parsedUrl) + protocol_lenght+ hostname_lenght + path_lenght + tmp - 1] = 0x12;
+	((char*)ret)[parseUrlAlloc_len-i] = 0x12;
 	#endif
 
 	ret->port = port;
@@ -296,17 +302,23 @@ parsedUrl* parse_URL(char* url) {
 	i = sizeof(parsedUrl);
 	ret->protocol = ((char*)ret) + i;
 	memcpy(ret->protocol, protocol,protocol_lenght);
+	((char*)ret)[i+protocol_lenght] = '\0';
 
-	i += protocol_lenght;
+	i += protocol_lenght + 1;
 	ret->hostname = ((char*)ret) + i;
-	memcpy(ret->hostname, hostname, hostname_lenght);
+	if (add_www) {
+		memcpy(ret->hostname, CONST_WWW_LABEL_STRING, strlen(CONST_WWW_LABEL_STRING)); /* copy in www. if we need to add it*/
+	}
+	memcpy(ret->hostname + tmp, hostname, hostname_lenght);
+	((char*)ret)[i+tmp+hostname_lenght] = '\0';
 
-	i += hostname_lenght;
+	i += hostname_lenght + 1;
 	ret->path = ((char*)ret) + i;
 	memcpy(ret->path, path, path_lenght);
+	((char*)ret)[i+path_lenght] = '\0';
 
 	#ifdef DEBUG
-		if (((char*)ret)[sizeof(parsedUrl) + protocol_lenght+ hostname_lenght + path_lenght + tmp - 1] != 0X12) {
+		if (((char*)ret)[parseUrlAlloc_len-i] != 0X12) {
 			puts("DEBUG: OOPS: memory corruption in parse_URL");
 			errno = ENOMEM;
 			free(ret);
@@ -316,6 +328,7 @@ parsedUrl* parse_URL(char* url) {
 
 	return ret;
 
+#undef parseUrlAlloc_len
 }
 
 uint32 strlen32(char* start){
