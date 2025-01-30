@@ -342,14 +342,6 @@ int32 DNS_parse_reply(unsigned char* DNS_response, int16 id, int recv_len, FILE*
 	
 	printflog("DNS has %d answers\n",dns_answers);
 
-	puts("remove this debug code");
-	putslog("respone: ");
-	for (i = 0; i < 1024; i++)
-	{
-		printflog("%02X ", (unsigned char)DNS_response[i]);
-	}
-	putslog("\n");
-
 	i = DNS_HEADER_SIZE; /* this should now point at the first byte of the DNS response */
 
 	/* handle if the server returns dns questions */

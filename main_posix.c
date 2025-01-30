@@ -219,9 +219,6 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 
 	ipv4 = DNS_lookup(url, DNS_LIST, log);
 
-	/*puts("using debug ip instead...");
-	ipv4 = 0xB9C76E85;*/
-
 	p_url = parse_URL(url);
 	
 
@@ -378,7 +375,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 
 
 	bufflen = httpResponseGetContentSize(buff, bytes_read, log);
-	printf("allocating space for %d elements\n", bufflen);
+	printflog("allocating space for %d elements\n", bufflen);
 
 
 	oldbuff = buff;

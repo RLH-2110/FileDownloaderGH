@@ -7,7 +7,7 @@ typedef struct parsedUrl {
 	char* protocol;
 	char* hostname;
 	char* path;
-	uint32 port;
+	uint16 port;
 } parsedUrl;
 
 
@@ -29,13 +29,15 @@ typedef struct parsedUrl {
 
 	Details:
 	Urls with protocols other than https are considered invalid. so http and ftp are not valid urls for this function. if you leave out the protocol, https is assumed.
-	ipv4 and ipv6 inputs are also invalid.
+	ipv6 inputs are invalid. ipv4 addresses will be seen as valid however.
+	if an url has less than 3 labels, 'www.' is prependet to the hostname, but only if the first label is not allready 'www.'
 	localhost will be interpreted as www.localhost
 	on errors NULL is returned
 	you must use punycode if you want to have urls with unicode, urls with characters not permited in the hosname are considered invalid.
 	user info is NOT supported (somthing like www.abc@user.com).
-
-	if you do not put in stuff like https, or www. then they will be added. i.e. google.de -> https:\\google.de\ before it is validated and split *(the implematiotion is a bit different, but this explaination is easier)
+	trailing dots in the hostname will be ignored i.e. www.google.com. -> www.google.com
+	
+	as stated before, if https is missing or you have only 2 labels with none of them being 'www', then these will be added internally in the function i.e. google.de -> https:\\www.google.de\ before it is validated and split *(the implematiotion is a bit different, but this explaination is easier)
 
 	THE CALLER MUST FREE THE struct, NEVER free the fields of the struct, since they belong to the same memory as the struct. (areana)
 */

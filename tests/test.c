@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 		printf("test passed (%d out of %d)\n", total_test_passes, i);
 		return EXIT_FAILURE;
 	}
-
+	total_tests += i; /* I saved the amount of total tests in the test_urlParse function*/
 
 	/* getQNAME(); */
 	for (i = 0; i < num_QNAME_Tests;i++) {
@@ -245,7 +245,7 @@ int main(int argc, char** argv) {
 			}
 		}
 	}else{
-		puts("skiping 3 half automatic DNS tests!");
+		puts("################## skiping 3 half automatic DNS tests! ##########################");
 	}
 
 	printf("DNS_lookup tests passed (%d out of %d)\n", i, num_DNS_lookup_Tests);

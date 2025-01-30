@@ -27,6 +27,7 @@ bool test_urlParse(uint32* out_tests_passed, uint32* out_tests_amount, bool prin
 
 		if (result == NULL) {
 			if (expectedHostname[i] == NULL) {
+				passed++;
 				continue;
 			}
 			else {
@@ -66,9 +67,9 @@ bool test_urlParse(uint32* out_tests_passed, uint32* out_tests_amount, bool prin
 
 
 		/* check path (TEST C)*/
-		if (compare(result->path, expectedRest[i]) != 0) {
+		if (compare(result->path, expectedPath[i]) != 0) {
 			if (print)
-				printf("parse_URL test %u C (path) failed\nexpected: %s\ngot: %s\n", i + 1, got(expectedRest[i]), got(result->path));
+				printf("parse_URL test %u C (path) failed\nexpected: %s\ngot: %s\n", i + 1, got(expectedPath[i]), got(result->path));
 			
 			goto test_urlParse_end;
 		}
@@ -82,7 +83,7 @@ bool test_urlParse(uint32* out_tests_passed, uint32* out_tests_amount, bool prin
 		}
 
 		free(result); result = NULL;
-
+		passed++;
 	}
 
 	test_urlParse_end:

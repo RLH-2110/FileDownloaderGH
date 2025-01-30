@@ -398,7 +398,7 @@
 
 
 		bufflen = httpResponseGetContentSize(buff, bytes_read, log);
-		printf("allocating space for %d elements\n", bufflen);
+		printflog("allocating space for %d elements\n", bufflen);
 
 		
 		oldbuff = buff;
