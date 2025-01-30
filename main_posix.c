@@ -74,7 +74,7 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 	p_url = parse_URL(url);
 	if (p_url == NULL) {
 		errno = EINVAL;
-		return NULL; /* invalid url provided! */
+		return 0; /* invalid url provided! */
 	}
 
 	for(DNSindex = 0;;DNSindex++){

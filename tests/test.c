@@ -268,7 +268,7 @@ int main(int argc, char** argv) {
 		usresult = download_file(downloader_test_urls[i],DNS_LIST,443, (uint32*)&out_fileSize ,log);
 
 		if (usresult == NULL) {
-			if (compareFileAgainst[i] == "") {
+			if (compareFileAgainst[i][0] == '\0') {
 				printf("download_file test %d passed\n", i + 1);
 				continue;
 			}else{

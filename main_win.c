@@ -67,7 +67,7 @@
 		p_url = parse_URL(url);
 		if (p_url == NULL) {
 			errno = EINVAL;
-			return NULL; /* invalid url provided! */
+			return 0; /* invalid url provided! */
 		}
 
 
