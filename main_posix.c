@@ -183,7 +183,7 @@ const char* DOWNLOAD_GET_REQUEST = "GET %s HTTP/1.1\r\n"
              "Connection: close\r\n"
              "\r\n";
 
-unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize, FILE* log){
+unsigned char* download_file(char* url, int32* DNS_LIST, uint32* out_fileSize, FILE* log){
 	parsedUrl* p_url;
 	int32 ipv4;
 	struct timeval tv;
@@ -285,7 +285,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 	}
 
 	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(port); 
+	server_addr.sin_port = htons(p_url->port); 
 	server_addr.sin_addr.s_addr = htonl(ipv4); 
 
 
