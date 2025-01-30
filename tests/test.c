@@ -265,7 +265,7 @@ int main(int argc, char** argv) {
 
 	for (i = 0; i < num_donwloader_Tests;i++) {
 		out_fileSize = 0;
-		usresult = download_file(downloader_test_urls[i],DNS_LIST,443, (uint32*)&out_fileSize ,log);
+		usresult = download_file(downloader_test_urls[i],DNS_LIST, (uint32*)&out_fileSize ,log);
 
 		if (usresult == NULL) {
 			if (compareFileAgainst[i][0] == '\0') {
@@ -314,7 +314,7 @@ int main(int argc, char** argv) {
 
 	fclose(log);
 	printf("Total tests passed (%d out of %d)\n", total_test_passes, total_tests);
-	puts("TODO: add more tests for invalid inputs.\n");
+	puts("done.\n");
 
 	return EXIT_SUCCESS;
 } 

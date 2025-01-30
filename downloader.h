@@ -12,8 +12,6 @@
 
 	URL: char* that contains the string of the url where we want to download the file
 	
-	port: the port to connect to, something like 80 or 443
-
 	out_fileSize: pointer to where you want to store the lenght of the donwloaded data
 
 	log: optional log file. set to NULL if unused, or set it to point to a open file
@@ -27,7 +25,7 @@
 		EMOMEM: out of memory
 		EHOSTUNREACH: Url could not be resolved with any DNS that was provided
 */
-unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize, FILE* log);
+unsigned char* download_file(char* url, int32* DNS_LIST, uint32* out_fileSize, FILE* log);
 
 
 /* this should be called once and that should happen before the frist download_file call. this function has open ssl init stuff*/

@@ -4,7 +4,7 @@ files_stage2 = tests/test.c tests/getc.c tests/ipinput.c tests/testing_funcs.c u
 #ofiles := $(files_stage1:.c=.o)
 ofiles := $(patsubst %.c,%.o,$(notdir $(files_stage1)))
 output = downloader.a
-cleanup = test.o log.txt
+cleanup = test.o log.txt urlcat.o
 ldflags =
 warnings = -Wno-long-long
 
@@ -23,14 +23,25 @@ else
 $(info    assuming posix)
 endif
 
+PHONY: clear clean run skip mini all release
+
 all:
 	$(gcc) -g $(files_stage1) -c $(LDFLAGS) $(OSFLAG) $(warnings)
 
 	ar cr $(output) $(ofiles)
 	$(gcc) -g $(files_stage2) $(output) -o test.o $(LDFLAGS) $(OSFLAG) $(warnings)
-	
 
-PHONY: clear clean run skip
+release:
+	$(gcc) -O3 $(files_stage1) -c $(LDFLAGS) $(OSFLAG)
+
+	ar cr $(output) $(ofiles)
+	$(gcc) -O3 $(files_stage2) $(output) -o test.o $(LDFLAGS) $(OSFLAG)
+
+mini:
+	$(gcc) -O3 $(files_stage1) -c $(LDFLAGS) $(OSFLAG)
+
+	ar cr $(output) $(ofiles)
+	$(gcc) -O3 tests/urlcat/main.c $(output) -o urlcat.o $(LDFLAGS) $(OSFLAG)
 
 run: all
 	./test.o
