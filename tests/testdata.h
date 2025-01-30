@@ -1,7 +1,7 @@
 #ifndef included_testdata_h
 #define included_testdata_h
 
-#include "int.h"
+#include "../int.h"
 
 #ifndef NULL
 #define NULL (void*)0
@@ -12,101 +12,6 @@ typedef int bool;
 #define true 0x01
 #define false 0x0
 #endif
-
-#define num_parse_URL_Tests 20
- char* testUrls[num_parse_URL_Tests] = {
-	"https://www.github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt", /* 01 */
-	"https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
-	"www.github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
-	"github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
-	"https://www.github.com",  /* 05 */
-	"https://github.com",
-	"www.github.com",
-	"github.com",
-	NULL,
-	"()()", /* 10 */
-	"..",
-	".",
-	"abn.. / ",
-	"https://abc.deg.hij..lhagas.asgdsag/test",
-	"abc.deg.hij.lhagas.asgdsag", /* 15 */
-	"https://abc.deg.hij.lhagas.asgdsag/test",
-	"abc.deg.hij.lhagas.asgdsag/test",
-	"https://abc.deg.hij.lhagas.asgdsag",
-	"http://www.github.com",
-	"ftp://www.github.com" /* 20 */
-};
-
- char* expectedHostname[num_parse_URL_Tests] = {
-	"www.github.com", /* 01 */
-	"www.github.com",
-	"www.github.com",
-	"www.github.com",
-	"www.github.com",/* 05 */
-	"www.github.com",
-	"www.github.com",
-	"www.github.com",
-	NULL,
-	NULL,/* 10 */
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	"abc.deg.hij.lhagas.asgdsag",/* 15 */
-	"abc.deg.hij.lhagas.asgdsag",
-	"abc.deg.hij.lhagas.asgdsag",
-	"abc.deg.hij.lhagas.asgdsag",
-	"www.github.com",
-	"www.github.com" /* 20 */
-};
-
- char* expectedProtocol[num_parse_URL_Tests] = {
-	"https", /* 01 */
-	"https",
-	"https",
-	"https",
-	"https",  /* 05 */
-	"https",
-	"https",
-	"https",
-	NULL,
-	NULL,/* 10 */
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	"https", /* 15 */
-	"https",
-	"https",
-	"https",
-	"http",
-	"ftp" /* 20 */
-};
-
- char* expectedRest[num_parse_URL_Tests] = {
-	"/RLH-2110/FileDownloaderGH/blob/master/sample.txt", /* 01 */
-	"/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
-	"/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
-	"/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
-	"", /* 05 */
-	"",
-	"",
-	"",
-	NULL,
-	NULL,  /* 10 */
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	"", /* 15 */
-	"/test",
-	"/test",
-	"",
-	"",
-	"" /* 20 */
-};
-
-
 
 
 #define num_QNAME_Tests 5
@@ -244,19 +149,25 @@ char* test_DNS_lookups[num_DNS_lookup_Tests] = { "www.google.com", "github.com",
 bool find_expected_DNS_lookups[num_DNS_lookup_Tests] = { true, true, true, false, false};
 
 
-#define num_donwloader_Tests 3
+#define num_donwloader_Tests 6
+/*	 downloader_test_url0[] (NULL) */
 char downloader_test_url1[] = "https://raw.githubusercontent.com/RLH-2110/FileDownloaderGH/refs/heads/master/sample.txt";
 char downloader_test_url2[] = "https://raw.githubusercontent.com/RLH-2110/FileDownloaderGH/refs/heads/master/img_sample.png";
-
+char downloader_test_url3[] = ")(()()()@nonsense.com";
+char downloader_test_url4[] = "https://raw.githubusercontent.com./RLH-2110/FileDownloaderGH/refs/heads/master/sample.txt?this#andThisShouldBeignored";
+char downloader_test_url5[] = "0.0.0.0";
 
 char* downloader_test_urls[num_donwloader_Tests] = { 
 		NULL, 
 		downloader_test_url1,
-	 	downloader_test_url2
+	 	downloader_test_url2,
+		downloader_test_url3,
+		downloader_test_url4,
+		downloader_test_url5
 };
 
-uint32 expected_filesize[num_donwloader_Tests] = {0,78,1289240};
-char* compareFileAgainst[num_donwloader_Tests] = {"","sample.txt","img_sample.png"};
+uint32 expected_filesize[num_donwloader_Tests] = {0,78,1289240,0,78,0};
+char* compareFileAgainst[num_donwloader_Tests] = {"","sample.txt","img_sample.png","","sample.txt",""};
 
 
 /*included_downloader_h*/

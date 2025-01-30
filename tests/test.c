@@ -1,31 +1,18 @@
-#include "downloader.h"
-#include "downloader_internal.h"
+#include "../downloader.h"
+#include "../downloader_internal.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "testdata.h"
+#include "testing_funcs.h"
+
+#include "../urlParse/urlParse_testData.h"
 
 #ifndef NULL
 #define NULL (void*)0
 #endif
 
-/* zero if equal, non zero if not equal.*/
-int compare(char* a, char* b) {
-	if (a == 0 && b == 0)
-		return 0;
-	if (a == 0 || b == 0)
-		return 0xff;
-	return strcmp(a, b);
-}
-
-/* gets a sting, if its NULl it retuns "NULL", if its empty it returns "(EMPTY)" if its neither, it returns the given string*/
-char* got(char* str){
-	if (str == NULL)
-		return "NULL";
-	if (str[0] == 0)
-		return "(EMPTY)";
-	return str;
-}
+#include "testing_funcs.h"
 
 void* malloc_oom(size_t size) {
 	void* p = malloc(size);
@@ -43,11 +30,10 @@ const char NSLOOKUP_STR[] = "nslookup ";
 
 
 
-int main(int argc, char** argv){
-	parsedUrl* result;
+int main(int argc, char** argv) {
 	char* sresult;
 	unsigned char* usresult;
-	int i;
+	uint32 i;
 	int nresult;
 	char* str1;
 	char* str2;
@@ -56,8 +42,8 @@ int main(int argc, char** argv){
 	int32 iPresult;
 	FILE* log;
 	FILE* dwl;
-	int total_test_passes;
-	int total_tests;
+	uint32 total_test_passes;
+	uint32 total_tests;
 	int32 tmp;
 	int32 out_fileSize;
 	bool skip_manual_DNS_tests = false;
@@ -68,59 +54,12 @@ int main(int argc, char** argv){
 	log = NULL;
 	total_test_passes = 0; total_tests = 0;
 
-	for (i = 0; i < num_parse_URL_Tests;i++) {
-		result = parse_URL(testUrls[i]);
-
-		if (result == NULL) {
-			if (expectedHostname[i] == NULL) {
-				printf("parse_URL test %d passed\n", i + 1);
-				continue;
-			}
-			else {
-				printf("parse_URL test %d failed\nexpected data\nbut got NULL\n", i + 1);
-				printf("test passed (%d out of %d)\n", i + 1, num_parse_URL_Tests);
-				return EXIT_FAILURE;
-			}
-		}
-		else {
-			if (expectedHostname[i] == NULL) {
-				printf("parse_URL test %d failed\nexpected NULL\nbut got data\n", i + 1);
-				printf("test passed (%d out of %d)\n", i + 1, num_parse_URL_Tests);
-				return EXIT_FAILURE;
-			}
-		}
-
-		if (compare(result->hostname, expectedHostname[i]) != 0) {
-			printf("parse_URL test %dA (hostname) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedHostname[i]),got(result->hostname));
-			printf("test passed (%d out of %d)\n", i + 1, num_parse_URL_Tests);
-			return EXIT_FAILURE;
-		}
-		else { printf("parse_URL test %dA passed\n",i+1); }
-
-		/* test 1B */
-		if (compare(result->protocol, expectedProtocol[i]) != 0) {
-			printf("parse_URL test %dB (protocol) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedProtocol[i]),got(result->protocol));
-			printf("test passed (%d out of %d)\n", i + 1, num_parse_URL_Tests);
-			return EXIT_FAILURE;
-		}
-		else { printf("parse_URL test %dB passed\n",i+1); }
-
-		/* test 1C */
-		if (compare(result->rest, expectedRest[i]) != 0) {
-			printf("parse_URL test %dC (rest) failed\nexpected: %s\ngot: %s\n",i+1,got(expectedRest[i]),got(result->rest));
-			printf("test passed (%d out of %d)\n", i+1, num_parse_URL_Tests);
-			return EXIT_FAILURE;
-		}
-		else { printf("parse_URL test %dC passed\n",i+1); }
-
-		free(result); result = NULL;
-
+	/* parseUrl() */
+	if (test_urlParse(&total_test_passes, &i, true) == false){
+		printf("test passed (%d out of %d)\n", total_test_passes, i);
+		return EXIT_FAILURE;
 	}
-
-	printf("parse_URL tests passed (%d out of %d)\n", i,num_parse_URL_Tests);
-	total_test_passes += i; total_tests += num_parse_URL_Tests;
-
-
+	total_tests += i; /* I saved the amount of total tests in the test_urlParse function*/
 
 	/* getQNAME(); */
 	for (i = 0; i < num_QNAME_Tests;i++) {
@@ -306,7 +245,7 @@ int main(int argc, char** argv){
 			}
 		}
 	}else{
-		puts("skiping 3 half automatic DNS tests!");
+		puts("################## skiping 3 half automatic DNS tests! ##########################");
 	}
 
 	printf("DNS_lookup tests passed (%d out of %d)\n", i, num_DNS_lookup_Tests);
@@ -329,7 +268,7 @@ int main(int argc, char** argv){
 		usresult = download_file(downloader_test_urls[i],DNS_LIST,443, (uint32*)&out_fileSize ,log);
 
 		if (usresult == NULL) {
-			if (downloader_test_urls[i] == NULL){
+			if (compareFileAgainst[i][0] == '\0') {
 				printf("download_file test %d passed\n", i + 1);
 				continue;
 			}else{

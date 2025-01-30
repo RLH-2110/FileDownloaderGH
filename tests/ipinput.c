@@ -1,10 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "defines.h"
-#include "int.h"
+#include "../defines.h"
+#include "../int.h"
 #include "getc.h"
-#include "downloader_internal.h"
+#include "../downloader_internal.h"
 
 #define oI_buffsize 4
 
