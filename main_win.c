@@ -64,12 +64,20 @@
 		    return 0;
 		}
 
+		p_url = parse_URL(url);
+		if (p_url == NULL) {
+			errno = EINVAL;
+			return NULL; /* invalid url provided! */
+		}
+
 
 		for(DNSindex = 0;;DNSindex++){
 
 			if (DNS_LIST[DNSindex] == 0){ /* terminator found */
 				putslog("Can not connect to any dns in the list!");
 				WSACleanup();
+				free(p_url);
+				errno = EHOSTUNREACH;
 				return 0;
 			}
 
@@ -77,6 +85,7 @@
 			if (sock == INVALID_SOCKET) {
 		    	perrorlog_winsock("socket failed");
 		    	WSACleanup();
+				free(p_url);
 				errno = EIO;
 		    	return 0;
 			}
@@ -87,6 +96,7 @@
 				perrorlog_winsock("setting socket timeout failed");
 				closesocket(sock);
 				WSACleanup();
+				free(p_url);
 				errno = EIO;
 				return 0;
 			}
@@ -112,14 +122,13 @@
 			}
 
 			id = (uint16)time(NULL);
-			p_url = parse_URL(url);
 			DNS_request = generate_DNS_request(p_url->hostname, id, &request_size, log);
-			free(p_url); p_url = NULL;
 
 			if (DNS_request == NULL) {
 				putslog("DNS Request could not be generated - out of memory!");
 				closesocket(sock);
 				WSACleanup();
+				free(p_url);
 				errno = ENOMEM;
 				return 0;
 			}
@@ -161,11 +170,13 @@
 
 			if (ip != 0){
 				WSACleanup();
+				free(p_url);
 				return ip;
 			}
 		}
 
 		WSACleanup();
+		free(p_url);
 		return 0;
 	}
 
@@ -228,7 +239,7 @@
 		}
 
 		p_url = parse_URL(url);
-		if (url == NULL) {
+		if (p_url == NULL) {
 			errno = EINVAL;
 			return NULL; /* invalid url provided! */
 		}

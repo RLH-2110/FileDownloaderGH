@@ -71,11 +71,17 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 		return 0;
 	}
 
-
+	p_url = parse_URL(url);
+	if (p_url == NULL) {
+		errno = EINVAL;
+		return NULL; /* invalid url provided! */
+	}
 
 	for(DNSindex = 0;;DNSindex++){
 		if (DNS_LIST[DNSindex] == 0){
 			putslog("Can not connect to any dns in the list!");
+			free(p_url);
+			errno = EHOSTUNREACH;
 			return 0;
 		}
 
@@ -83,6 +89,7 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 		sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP); 
 		if (sock < 0) {
 	    	perrorlog("socket failed");
+			free(p_url);
 			errno = EIO;
 	    	return 0;
 		}
@@ -93,6 +100,7 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 		if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) != 0){
 			perrorlog("setting socket timeout failed");
 			close(sock);
+			free(p_url);
 			errno = EIO;
 			return 0;
 		}
@@ -110,16 +118,17 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 		ret = connect(sock, (struct sockaddr*)&server_addr, address_len);
 		if (ret != 0){
 			perrorlog("connect failed");
+			free(p_url);
 			close(sock);
 			continue;
 		}
 
 		id = (uint16)time(NULL);
-		p_url = parse_URL(url);
 		DNS_request = generate_DNS_request(p_url->hostname, id, &request_size, log);
-		free(p_url); p_url = NULL;
+
 		if (DNS_request == NULL){
 			putslog("URL Parseing error - No memory");
+			free(p_url);
 			errno = ENOMEM;
 			return 0;
 		}
@@ -161,9 +170,10 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 		if (ip == 0)
 			continue;
 		
+		free(p_url);
 		return ip;
 	}
-
+	free(p_url);
 	return 0;
 
 }
@@ -215,7 +225,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 	}
 
 	p_url = parse_URL(url);
-	if (url == NULL) {
+	if (p_url == NULL) {
 		errno = EINVAL;
 		return NULL; /* invalid url provided! */
 	}
