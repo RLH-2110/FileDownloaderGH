@@ -25,17 +25,17 @@ endif
 
 PHONY: clear clean run skip mini all release
 
-all:
-	$(gcc) -g $(files_stage1) -c $(LDFLAGS) $(OSFLAG) $(warnings)
-
-	ar cr $(output) $(ofiles)
-	$(gcc) -g $(files_stage2) $(output) -o test.o $(LDFLAGS) $(OSFLAG) $(warnings)
-
 release:
 	$(gcc) -O3 $(files_stage1) -c $(LDFLAGS) $(OSFLAG)
 
 	ar cr $(output) $(ofiles)
 	$(gcc) -O3 $(files_stage2) $(output) -o test.o $(LDFLAGS) $(OSFLAG)
+
+all:
+	$(gcc) -g $(files_stage1) -c $(LDFLAGS) $(OSFLAG) $(warnings)
+
+	ar cr $(output) $(ofiles)
+	$(gcc) -g $(files_stage2) $(output) -o test.o $(LDFLAGS) $(OSFLAG) $(warnings)
 
 mini:
 	$(gcc) -O3 $(files_stage1) -c $(LDFLAGS) $(OSFLAG)
