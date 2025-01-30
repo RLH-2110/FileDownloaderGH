@@ -55,16 +55,19 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 
 	if (url == NULL || DNS_LIST == NULL){
 		perrorlog("url and DNS_LIST must not be zero!");
+		errno = EINVAL;
 		return 0;
 	}
 
 	if (DNS_LIST[0] == 0){
 		perrorlog("DNS_LIST is emptry");
+		errno = EINVAL;
 		return 0;
 	}
 
 	if (url[0] == '\0') {
 		putslog("gave an empty url!");
+		errno = EINVAL;
 		return 0;
 	}
 
@@ -80,6 +83,7 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 		sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP); 
 		if (sock < 0) {
 	    	perrorlog("socket failed");
+			errno = EIO;
 	    	return 0;
 		}
 
@@ -89,6 +93,7 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 		if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) != 0){
 			perrorlog("setting socket timeout failed");
 			close(sock);
+			errno = EIO;
 			return 0;
 		}
 
@@ -114,7 +119,8 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 		DNS_request = generate_DNS_request(p_url->hostname, id, &request_size, log);
 		free(p_url); p_url = NULL;
 		if (DNS_request == NULL){
-			putslog("URL Parseing error");
+			putslog("URL Parseing error - No memory");
+			errno = ENOMEM;
 			return 0;
 		}
 
@@ -124,7 +130,7 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 			perrorlog("error while doing sentto");
 			free(DNS_request);
 			close(sock);
-			return 0;
+			continue;
 		}
 		free(DNS_request);
 			
@@ -208,26 +214,34 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 		return NULL;
 	}
 
+	p_url = parse_URL(url);
+	if (url == NULL) {
+		errno = EINVAL;
+		return NULL; /* invalid url provided! */
+	}
 
     ctx = SSL_CTX_new(method);
 
     if (!ctx) {
         perrorlog("Unable to create SSL context");
+		free(p_url);
+		errno = EIO;
         return NULL;
     }
 
 
 	ipv4 = DNS_lookup(url, DNS_LIST, log);
 
-	p_url = parse_URL(url);
-	
-
-	if (p_url->path == NULL || p_url->hostname == NULL){
-		putslog("URL Parseing error");
-		SSL_CTX_free(ctx);
-		free(p_url); p_url = NULL;
-		return NULL;
+	if (ipv4 == 0) {
+		free(p_url);
+		if (errno != 0)
+			return NULL;
+		else {
+			errno = EHOSTUNREACH;
+			return NULL;
+		}
 	}
+	
 
 	bufflen = strlen(DOWNLOAD_GET_REQUEST) + strlen(p_url->hostname) + strlen(p_url->path) + 1;
 	buff = malloc(bufflen);
@@ -235,6 +249,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 		free(p_url); p_url = NULL;
 		SSL_CTX_free(ctx);
 		putslog("Out of memory!");
+		errno = ENOMEM;
 		return NULL;
 	}
 
@@ -243,6 +258,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
     	perrorlog("socket failed");
     	SSL_CTX_free(ctx);
 		free(p_url); p_url = NULL;
+		errno = EIO;
     	return NULL;
 	}
 
@@ -254,6 +270,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 		free(p_url); p_url = NULL;
 		SSL_CTX_free(ctx);
 		close(sock);
+		errno = EIO;
 		return NULL;
 	}
 
@@ -269,7 +286,8 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 		perrorlog("connect failed");
 		SSL_CTX_free(ctx);
 		close(sock);
-		free(p_url); p_url = NULL;;
+		free(p_url); p_url = NULL;
+		errno = EIO;
 		return NULL;
 	}
 
@@ -289,6 +307,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
         SSL_free(ssl);
         close(sock);
         SSL_CTX_free(ctx);
+		errno = EIO;
         return NULL;
     }
 
@@ -305,6 +324,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
         SSL_free(ssl);
         close(sock);
         SSL_CTX_free(ctx);
+		errno = EIO;
         return NULL;
     }
 
@@ -321,6 +341,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 		SSL_free(ssl);
 		close(sock);
 		SSL_CTX_free(ctx);
+		errno = ENOMEM;
 		return NULL;
 	}
 
@@ -337,6 +358,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 			SSL_free(ssl);
 			close(sock);
 			SSL_CTX_free(ctx);
+			errno = EIO;
 			return NULL;
 		}
 
@@ -375,6 +397,25 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 
 
 	bufflen = httpResponseGetContentSize(buff, bytes_read, log);
+
+	if (bufflen == 0) {
+		if (errno == EIO) {
+			putslog("could not find Content-Length!");
+			SSL_free(ssl);
+			close(sock);
+			SSL_CTX_free(ctx);
+			errno = ENOMEM;
+			return NULL;
+		}
+
+		putslog("the Content-Length is 0!");
+		SSL_free(ssl);
+		close(sock);
+		SSL_CTX_free(ctx);
+		errno = ENOMEM;
+		return NULL;
+	}
+
 	printflog("allocating space for %d elements\n", bufflen);
 
 
@@ -385,6 +426,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 		SSL_free(ssl);
 		close(sock);
 		SSL_CTX_free(ctx);
+		errno = ENOMEM;
 		return NULL;
 		}
 
@@ -422,6 +464,7 @@ unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out
 		SSL_free(ssl);
 		close(sock);
 		SSL_CTX_free(ctx);
+		errno = EIO;
 		return NULL;
 	}
 

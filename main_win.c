@@ -2,6 +2,7 @@
 	#include <stdlib.h>
 	#include <stdio.h>
 	#include <string.h>
+	#include<errno.h>
 
 	#include <time.h>
 	#include <errno.h>
@@ -21,7 +22,8 @@
 
 	#include <winsock2.h>
 	#include <windows.h>
-		
+	
+
 	int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 
 		char* tmp;
@@ -40,21 +42,25 @@
 
 		if (url == NULL || DNS_LIST == NULL){
 			perrorlog("url and DNS_LIST must not be zero!");
+			errno = EINVAL;
 			return 0;
 		}
 
 		if (DNS_LIST[0] == 0){
 			perrorlog("DNS_LIST is emptry");
+			errno = EINVAL;
 			return 0;
 		}
 
 		if (url[0] == '\0') {
 			putslog("gave an empty url!");
+			errno = EINVAL;
 			return 0;
 		}
 
 		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
 		    perrorlog("WSAStartup failed");
+			errno = EIO;
 		    return 0;
 		}
 
@@ -71,6 +77,7 @@
 			if (sock == INVALID_SOCKET) {
 		    	perrorlog_winsock("socket failed");
 		    	WSACleanup();
+				errno = EIO;
 		    	return 0;
 			}
 
@@ -80,6 +87,7 @@
 				perrorlog_winsock("setting socket timeout failed");
 				closesocket(sock);
 				WSACleanup();
+				errno = EIO;
 				return 0;
 			}
 
@@ -109,9 +117,10 @@
 			free(p_url); p_url = NULL;
 
 			if (DNS_request == NULL) {
-				putslog("DNS Request could not be generated");
+				putslog("DNS Request could not be generated - out of memory!");
 				closesocket(sock);
 				WSACleanup();
+				errno = ENOMEM;
 				return 0;
 			}
 
@@ -196,49 +205,63 @@
 
 		if (out_fileSize == NULL) {
 			putslog("out_fileSize can not be NULL!");
+			errno = EINVAL;
 			return NULL;
 		}
 
 		if (url == NULL || DNS_LIST == NULL) {
 			perrorlog("url and DNS_LIST must not be zero!");
+			errno = EINVAL;
 			return NULL;
 		}
 
 		if (DNS_LIST[0] == 0) {
 			perrorlog("DNS_LIST is emptry");
+			errno = EINVAL;
 			return NULL;
 		}
 
 		if (url[0] == '\0') {
 			putslog("gave an empty url!");
+			errno = EINVAL;
 			return NULL;
 		}
+
+		p_url = parse_URL(url);
+		if (url == NULL) {
+			errno = EINVAL;
+			return NULL; /* invalid url provided! */
+		}
+		
 
 
 		ctx = SSL_CTX_new(method);
 
 		if (!ctx) {
 			perrorlog("Unable to create SSL context");
+			free(p_url);
+			errno = EIO;
 			return NULL;
 		}
 
 		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
 			perrorlog("WSAStartup failed");
+			free(p_url);
+			errno = EIO;
 			return 0;
 		}
 
+		errno = 0;
 		ipv4 = DNS_lookup(url, DNS_LIST, log);
 
-
-		p_url = parse_URL(url);
-
-
-		if (p_url->path == NULL || p_url->hostname == NULL) {
-			putslog("URL Parseing error");
-			SSL_CTX_free(ctx);
-			free(p_url); p_url = NULL;
-			WSACleanup();
-			return NULL;
+		if (ipv4 == 0) {
+			free(p_url);
+			if (errno != 0)
+				return NULL;
+			else {
+				errno = EHOSTUNREACH;
+				return NULL;
+			}
 		}
 
 		bufflen = strlen(DOWNLOAD_GET_REQUEST) + strlen(p_url->hostname) + strlen(p_url->path) + 1;
@@ -248,6 +271,7 @@
 			SSL_CTX_free(ctx);
 			putslog("Out of memory!");
 			WSACleanup();
+			errno = ENOMEM;
 			return NULL;
 		}
 
@@ -257,6 +281,7 @@
 			SSL_CTX_free(ctx);
 			free(p_url); p_url = NULL;
 			WSACleanup();
+			errno = EIO;
 			return NULL;
 		}
 
@@ -270,6 +295,7 @@
 			SSL_CTX_free(ctx);
 			closesocket(sock);
 			WSACleanup();
+			errno = EIO;
 			return NULL;
 		}
 
@@ -286,7 +312,8 @@
 			SSL_CTX_free(ctx);
 			closesocket(sock);
 			WSACleanup();;
-			free(p_url); p_url = NULL;;
+			free(p_url); p_url = NULL;
+			errno = EIO;
 			return NULL;
 		}
 
@@ -307,6 +334,7 @@
 			closesocket(sock);
 			WSACleanup();
 			SSL_CTX_free(ctx);
+			errno = EIO;
 			return NULL;
 		}
 
@@ -324,6 +352,7 @@
 			closesocket(sock);
 			WSACleanup();
 			SSL_CTX_free(ctx);
+			errno = EIO;
 			return NULL;
 		}
 
@@ -341,6 +370,7 @@
 			closesocket(sock);
 			WSACleanup();
 			SSL_CTX_free(ctx);
+			errno = ENOMEM;
 			return NULL;
 		}
 
@@ -358,6 +388,7 @@
 				closesocket(sock);
 				WSACleanup();
 				SSL_CTX_free(ctx);
+				errno = EIO;
 				return NULL;
 			}
 
@@ -396,8 +427,27 @@
 
 
 
-
+		errno = 0;
 		bufflen = httpResponseGetContentSize(buff, bytes_read, log);
+		
+		if (bufflen == 0) {
+			if (errno == EIO) {
+				putslog("could not find Content-Length!");
+				SSL_free(ssl);
+				closesocket(sock);
+				WSACleanup();
+				SSL_CTX_free(ctx);
+				return NULL;
+			}
+			
+			putslog("the Content-Length is 0!");
+			SSL_free(ssl);
+			closesocket(sock);
+			WSACleanup();
+			SSL_CTX_free(ctx);
+			return NULL;
+		}
+
 		printflog("allocating space for %d elements\n", bufflen);
 
 		
@@ -409,6 +459,7 @@
 			closesocket(sock);
 			WSACleanup();
 			SSL_CTX_free(ctx);
+			errno = ENOMEM;
 			return NULL;
 		}
 
@@ -447,6 +498,7 @@
 			closesocket(sock);
 			WSACleanup();
 			SSL_CTX_free(ctx);
+			errno = EIO;
 			return NULL;
 		}
 

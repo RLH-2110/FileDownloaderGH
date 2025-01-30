@@ -96,6 +96,7 @@ uint32 httpResponseGetContentSize(unsigned char* buff, uint32 length,FILE* log){
 
 	if (buff == NULL){
 		putslog("buff cant be null in httpResponseGetContentSize");
+		errno = EINVAL;
 		return 0;
 	}
 
@@ -103,11 +104,13 @@ uint32 httpResponseGetContentSize(unsigned char* buff, uint32 length,FILE* log){
 	i = htmlResponse_findInBuffStr(buff,length,i,"Content-Length: ");
 	if (i == 0){
 		putslog("cant find 'Content-Length: '");
+		errno = EIO;
 		return 0;
 	}
 	i2 = htmlResponse_findInBuff(buff, length,i,'\r');
 	if (i2 == 0){
 		putslog("cant find 'Content-Length: '");
+		errno = EIO;
 		return 0;
 	}
 	i += strlen("Content-Length: "); /* set i to point where the numbers start.*/
@@ -177,7 +180,7 @@ unsigned char* getQNAME(char* hostname){
 /* takes in a hostname and returns the DNS reqeust to resolve the hostname
 
 	output parameter: size: retuns the length of the request
-	
+
 	returns: byte array with the dns request (CALLER MUST FREE IT!)
 */
 unsigned char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log) {
@@ -191,8 +194,10 @@ unsigned char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* 
 
 	*size = ADJUSTED_REQUEST_SIZE;
 	request = malloc(ADJUSTED_REQUEST_SIZE + 1); /* to the RQEUEST_SIZE, the macro adds the lentgh of the hostname, since that is dynamic. add 2 because the qname adds 2 more bytes */
-	if (request == NULL)
+	if (request == NULL) {
+		errno = ENOMEM;
 		return NULL;
+	}
 
 	request[ADJUSTED_REQUEST_SIZE] = (unsigned char)0xAA;
 	
@@ -264,10 +269,12 @@ unsigned char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* 
 	request[request_index+2] = 0;
 	request[request_index+3] = 1;
 
+	/* for debbuging */
 	if(request[ADJUSTED_REQUEST_SIZE] != (unsigned char)0xAA) {
 		putslog("OOPS, I might have corupted memory in generate_DNS_request. Exiting progamm...");
 		exit(EXIT_FAILURE);
 	}
+
 
 	return request;
 }

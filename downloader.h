@@ -19,6 +19,13 @@
 	log: optional log file. set to NULL if unused, or set it to point to a open file
 
 	Returns: NULL if an error occured or a char* with the contents of the file
+
+	ERRORS:
+		errno will be set to 0 if no error occured.
+		EINVAL: invalid parameters
+		EIO: SSL error, socket error, WSA startup error or error while reading the https header
+		EMOMEM: out of memory
+		EHOSTUNREACH: Url could not be resolved with any DNS that was provided
 */
 unsigned char* download_file(char* url, int32* DNS_LIST, int32 port, uint32* out_fileSize, FILE* log);
 

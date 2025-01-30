@@ -15,6 +15,10 @@ typedef char uchar;
 	log: optional log file, can be set to NULL
 
 	return: returns the size of the content that we expect or 0 on error
+
+	errors:
+		EINVAL: invalid arguments
+		EIO: could not find the Content-Length
 */
 uint32 httpResponseGetContentSize(unsigned char* buff, uint32 length,FILE* log);
 
@@ -27,6 +31,9 @@ uint32 httpResponseGetContentSize(unsigned char* buff, uint32 length,FILE* log);
 	log: optional log file. set to NULL if unused, or set it to point to a open file
 
 	returns: byte array with the dns request (CALLER MUST FREE IT!)
+
+	errors:
+		ENOMEM: could not allocate memory
 */
 unsigned char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log);
 
@@ -86,6 +93,11 @@ int compare_DNS_requests(unsigned char* requestA, unsigned char* requestB);
 	log: optional log file. set to NULL if unused, or set it to point to a open stream
 
 	returns: 0 if there was an error, or the IPV4 Address of the answer, if there was one.
+
+	errors:
+		ENOMEM: there was no memory left.
+		EIO: socket or WSAStartup failed
+		EINVAL: invalid arguments passed
 */
 int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log);
 
