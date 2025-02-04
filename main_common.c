@@ -27,7 +27,7 @@
 		0: there was an error
 		other: the index where the char was found.
 */
-uint32 htmlResponse_findInBuff(unsigned char* buff, uint32 length, uint32 start_index, char find){
+static uint32 htmlResponse_findInBuff(unsigned char* buff, uint32 length, uint32 start_index, char find){
 	uint32 i = start_index;
 
 	while(true){
@@ -55,7 +55,7 @@ uint32 htmlResponse_findInBuff(unsigned char* buff, uint32 length, uint32 start_
 		0: there was an error
 		other: the index where the char was found.
 */
-uint32 htmlResponse_findInBuffStr(unsigned char* buff, uint32 length, uint32 start_index, char* find){
+static uint32 htmlResponse_findInBuffStr(unsigned char* buff, uint32 length, uint32 start_index, char* find){
 	uint32 strI;
 	uint32 hit;
 	uint32 buffI = start_index;

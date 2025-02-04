@@ -23,7 +23,7 @@
 		0: there was an error
 		other: the index where the char was found.
 */
-uint32 findInBuff(char* buff, uint32 length, uint32 start_index, char find);
+static uint32 findInBuff(char* buff, uint32 length, uint32 start_index, char find);
 
 /*
 	searches for a string of an array staring at start_index.
@@ -38,7 +38,7 @@ uint32 findInBuff(char* buff, uint32 length, uint32 start_index, char find);
 		0: there was an error
 		other: the index where the char was found.
 */
-uint32 findInBuffStr(char* buff, uint32 length, uint32 start_index, char* find);
+static uint32 findInBuffStr(char* buff, uint32 length, uint32 start_index, char* find);
 
 /* 
 	gets the length of the string, excluding the null terminator. (like strlen)
@@ -51,7 +51,7 @@ uint32 findInBuffStr(char* buff, uint32 length, uint32 start_index, char* find);
 		EINVAL: NULL was passed into str
 		EOVERFLOW: the string length can not fit into a 32 bit integer
 */
-uint32 strlen32(char* str);
+static uint32 strlen32(char* str);
 
 /* 
 	converts a string to an unsigned 32 bit integer.
@@ -67,7 +67,7 @@ uint32 strlen32(char* str);
 
 	returns: the number thats written as a string
 */
-uint16 atoui_strict(char* str, uint32 len);
+static uint16 atoui_strict(char* str, uint32 len);
 
 /* const strings */
 char CONST_HTTPS_STRING[] = "https";
@@ -382,7 +382,7 @@ parsedUrl* parse_URL(char* url) {
 #undef parseUrlAlloc_len
 }
 
-uint32 strlen32(char* start){
+static uint32 strlen32(char* start){
 	char* curr = start;
 
 	if (curr == NULL){
@@ -400,7 +400,7 @@ uint32 strlen32(char* start){
 	return curr - start;
 }
 
-uint32 findInBuff(char* buff, uint32 length, uint32 start_index, char find){
+static uint32 findInBuff(char* buff, uint32 length, uint32 start_index, char find){
 	uint32 i = start_index;
 
 	while(true){
@@ -417,7 +417,7 @@ uint32 findInBuff(char* buff, uint32 length, uint32 start_index, char find){
 
 
 
-uint32 findInBuffStr(char* buff, uint32 length, uint32 start_index, char* find){
+static uint32 findInBuffStr(char* buff, uint32 length, uint32 start_index, char* find){
 	uint32 strI;
 	uint32 hit;
 	uint32 buffI = start_index;
@@ -454,7 +454,7 @@ uint32 findInBuffStr(char* buff, uint32 length, uint32 start_index, char* find){
 
 
 
-uint16 atoui_strict(char* str, uint32 len){
+static uint16 atoui_strict(char* str, uint32 len){
 	uint16 val = 0;
 	unsigned int i; 
 
