@@ -20,19 +20,22 @@ after you have downloaded it, you might want to go to the makefile and adjust th
 
 If you don't have make installed, install it with `sudo apt install make`  
 
-if you have make installed, just do `make` and the output is in test.o and downloader.a with optimizations and no debug symbols. You can also run `make release` for the same result.  
-Compiling with debug symbols is also possible, simply run `make all`.  
-
+if you have make installed, just do `make` and the output is in downloader.a with optimizations and no debug symbols. You can also run `make release` for the same result.  
+Compiling with debug symbols is also possible, simply run `make debug`.  
+  
+for testing, you can run `make test` or `make debugtest`, the first is without debugging symbols, the second one is with them.  
+  
 With `make mini` you can get a small example program called urlcat; just give any URL to a URL leading to a raw text file while using https, and it will print the file to the console.  
+  
+`make clean` and `make clear` can be used to remove the output files.
 
 > [!NOTE]
 > all make targets expect **release** and **mini** will compile with debug symbols and without optimisations
 
 ### Testing
 
-Running test.o will show you if all the tests are passed. You can also do `make test` to run test.o automatically.  
+Running test.o will show you if all the tests are passed. You can also do `make run` to run test.o automatically.  
 The tests include some tests with user input for validation, these are tedious and can be skipped by adding any argument to test.o. alternatively run `make skip`  
-to clear the output files, run `make clean`  
   
 #### Windows
 
