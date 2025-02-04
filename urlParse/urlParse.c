@@ -395,13 +395,15 @@ static parsedUrl* parse_URL(char* url) {
 	else
 		tmp = 0;
 
-	i = 0;
+	
 	#ifdef DEBUG
-		i = 1;
+		#define DEBUG_CABNARY 1
+	#else 
+		#define DEBUG_CABNARY 0
 	#endif
 
 
-#define parseUrlAlloc_len sizeof(parsedUrl) + protocol_lenght + 1 + hostname_lenght + 1 + tmp + path_lenght + 1 + i
+#define parseUrlAlloc_len sizeof(parsedUrl) + protocol_lenght + 1 + hostname_lenght + 1 + tmp + path_lenght + 1 + DEBUG_CABNARY
 
 	/* build some sort of area that contains the struct and all the stuff that belongs to it. */
 	ret = malloc(parseUrlAlloc_len);
@@ -409,9 +411,9 @@ static parsedUrl* parse_URL(char* url) {
 		errno = ENOMEM;
 		return NULL;
 	}
-
+	
 	#ifdef DEBUG
-	((char*)ret)[parseUrlAlloc_len-i] = 0x12;
+		((char*)ret)[parseUrlAlloc_len-1] = 0x12;
 	#endif
 
 	ret->port = port;
@@ -435,7 +437,7 @@ static parsedUrl* parse_URL(char* url) {
 	((char*)ret)[i+path_lenght] = '\0';
 
 	#ifdef DEBUG
-		if (((char*)ret)[parseUrlAlloc_len-i] != 0X12) {
+		if (((char*)ret)[parseUrlAlloc_len-1] != 0X12) {
 			puts("DEBUG: OOPS: memory corruption in parse_URL");
 			errno = ENOMEM;
 			free(ret);
@@ -554,4 +556,4 @@ static uint16 atoui_strict(char* str, uint32 len){
 	return val;
 }
 
-#undef DEBUG
+#undef DEBUG_CABNARY
