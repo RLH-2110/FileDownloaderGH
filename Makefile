@@ -23,30 +23,31 @@ else
 $(info    assuming posix)
 endif
 
-PHONY: clear clean run skip mini all release
+.PHONY: clear clean run skip mini release test debug debugtest
+
 
 release:
 	$(gcc) -O3 $(files_stage1) -c $(LDFLAGS) $(OSFLAG)
-
 	ar cr $(output) $(ofiles)
+
+test: release
 	$(gcc) -O3 $(files_stage2) $(output) -o test.o $(LDFLAGS) $(OSFLAG)
 
-all:
+debug:
 	$(gcc) -g $(files_stage1) -c $(LDFLAGS) $(OSFLAG) $(warnings)
-
 	ar cr $(output) $(ofiles)
+
+
+debugtest: debug
 	$(gcc) -g $(files_stage2) $(output) -o test.o $(LDFLAGS) $(OSFLAG) $(warnings)
 
-mini:
-	$(gcc) -O3 $(files_stage1) -c $(LDFLAGS) $(OSFLAG)
-
-	ar cr $(output) $(ofiles)
+mini: release
 	$(gcc) -O3 tests/urlcat/main.c $(output) -o urlcat.o $(LDFLAGS) $(OSFLAG)
 
-run: all
+run: debugtest
 	./test.o
 
-skip: all
+skip: debugtest
 	./test.o skip
 
 clear: clean
