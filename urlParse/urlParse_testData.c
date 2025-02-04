@@ -3,7 +3,18 @@
 #include "../defines.h"
 #include "../int.h"
 
-#define num_parse_URL_Tests 62
+/* "header:" */
+
+#define num_parse_URL_Tests 63
+extern char* testUrls[num_parse_URL_Tests];
+extern char* expectedHostname[num_parse_URL_Tests];
+extern char* expectedProtocol[num_parse_URL_Tests];
+extern char* expectedPath[num_parse_URL_Tests];
+extern uint16 expectedPort[num_parse_URL_Tests];
+
+
+/* code : */
+
 char* testUrls[num_parse_URL_Tests] = {
 	"https://www.github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt", /* 01 */
 	"https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",
@@ -67,6 +78,7 @@ char* testUrls[num_parse_URL_Tests] = {
 	"https://example.com?var1=value1&var2=value2&var3=value3",
 	"google",
 	"https://example.com/wiki#comments",
+	"https://www.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.com",
 };
 
 
@@ -125,7 +137,7 @@ char* expectedHostname[num_parse_URL_Tests] = {
 	"www.localhost",
 	NULL,			/* 50 */
 	NULL,
-	NULL,
+	"www.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.com",
 	NULL,
 	NULL,			/* 55 */
 	NULL,
@@ -135,7 +147,8 @@ char* expectedHostname[num_parse_URL_Tests] = {
 	"www.example.com", /* 60 */
 	"www.example.com",
 	"www.google",
-	"example.com",
+	"www.example.com",
+	NULL,
 };
 
 char* expectedProtocol[num_parse_URL_Tests] = {
@@ -190,7 +203,7 @@ char* expectedProtocol[num_parse_URL_Tests] = {
 	"https",
 	NULL,			/* 50 */
 	NULL,
-	NULL,
+	"https",
 	NULL,
 	NULL,			/* 55 */
 	NULL,
@@ -201,6 +214,7 @@ char* expectedProtocol[num_parse_URL_Tests] = {
 	"https",
 	"https",
 	"https",
+	NULL,
 
 };
 
@@ -256,7 +270,7 @@ char* expectedPath[num_parse_URL_Tests] = {
 	"/",
 	NULL,			/* 50 */
 	NULL,
-	NULL,
+	"/",
 	NULL,
 	NULL,			/* 55 */
 	NULL,
@@ -267,6 +281,7 @@ char* expectedPath[num_parse_URL_Tests] = {
 	"/",
 	"/",
 	"/wiki",
+	NULL,
 };
 
 uint16 expectedPort[num_parse_URL_Tests] = {
@@ -321,7 +336,7 @@ uint16 expectedPort[num_parse_URL_Tests] = {
 	8080,
 	   0, /* 50 */
 	   0,
-	   0,
+	 443,
 	   0,
 	   0, /* 55 */
 	   0,
@@ -332,6 +347,7 @@ uint16 expectedPort[num_parse_URL_Tests] = {
 	 443,
 	 443,
 	 443,
+	   0,
 };
 
 

@@ -9,7 +9,6 @@
 
 #include "int.h"
 
-#include "downloader_internal.h"
 #include "DNS_offsets.h"
 #include "defines.h"
 
@@ -90,7 +89,18 @@ static uint32 htmlResponse_findInBuffStr(unsigned char* buff, uint32 length, uin
 
 }
 
-uint32 httpResponseGetContentSize(unsigned char* buff, uint32 length,FILE* log){
+/*
+	buff: buffer to the raw http response
+	length: lenght of the buffer
+	log: optional log file, can be set to NULL
+
+	return: returns the size of the content that we expect or 0 on error
+
+	errors:
+		EINVAL: invalid arguments
+		EIO: could not find the Content-Length
+*/
+static uint32 httpResponseGetContentSize(unsigned char* buff, uint32 length,FILE* log){
 	uint32 i = 0;
 	uint32 i2 = 0;
 
@@ -120,15 +130,18 @@ uint32 httpResponseGetContentSize(unsigned char* buff, uint32 length,FILE* log){
 
 
 
+
 /* 
 	gets the QNAME from a hostname
 
-	returns a QNAME
-	caller frees
+	this is used internally, and is only exported for testing
 
-	more detail in the header
+	NOTE: THE HOSTNAME MUST BE IN A VALID FORMAT! FOR EXAMPLE: MULTIPLE DOTS AFTER EACH OTHER CAUSE UNDEFINED BEHAVIOR!
+
+	returns a QNAME (functions simelar to a string)
+	MUST BE FREED BY THE CALLER!
 */
-unsigned char* getQNAME(char* hostname){
+static unsigned char* getQNAME(char* hostname){
 
 	unsigned char* qname;
 
@@ -181,9 +194,16 @@ unsigned char* getQNAME(char* hostname){
 
 	output parameter: size: retuns the length of the request
 
+	this is used internally, and is only exported for testing
+
+	log: optional log file. set to NULL if unused, or set it to point to a open file
+
 	returns: byte array with the dns request (CALLER MUST FREE IT!)
+
+	errors:
+		ENOMEM: could not allocate memory
 */
-unsigned char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log) {
+static unsigned char* generate_DNS_request(char* hostname, uint16 id, int* size, FILE* log) {
 
 	uint16 dns_flags;
 	int request_index;
@@ -284,7 +304,19 @@ enum DNS_lookup_state {
 	DLS_found
 };
 
-int32 DNS_parse_reply(unsigned char* DNS_response, int16 id, int recv_len, FILE* log){
+
+/* parses a DNS repsonse and turns it into an IP
+
+	invalid DNS_repsonses may result in undefined behavior!
+
+	DNS_response: char pointer pointing to the first byte of the response
+	id:	expected return ID from the DNS response
+	recv_len: the maximum length of DNS_response, used to guard against segmentation faults
+	log: optional logging file, set to NULL if unused
+
+	returns the ip if one could be found otherwhise it returns 0
+*/
+static int32 DNS_parse_reply(unsigned char* DNS_response, int16 id, int recv_len, FILE* log){
 
 	uint16 dns_answers;
 	int dns_answers_index;

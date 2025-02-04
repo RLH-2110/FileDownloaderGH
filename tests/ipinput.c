@@ -4,9 +4,27 @@
 #include "../defines.h"
 #include "../int.h"
 #include "getc.h"
-#include "../downloader_internal.h"
 
 #define oI_buffsize 4
+
+
+/* turns the ip address to a string.
+	ip: a 32 bit integer holding the ipv4 address
+
+	returns a string formated as a decimal ip using periods as seperator.
+	YOU MUST FREE IT!
+	returns NULL on error
+*/
+static char* IPv4ToString(int32 ip){
+
+	char* str = malloc(4*4); /* 4*4, because it is 4 times maximal 3 digits plus a seperator or NULL*/
+	if (str == NULL)
+		return NULL;
+
+	sprintf(str,"%d.%d.%d.%d", (ip & 0xFF000000) >> 24 , (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
+	return str;
+}
+
 
 bool isNum(char chr) {
 	if (chr < '0' || chr > '9')

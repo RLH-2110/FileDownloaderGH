@@ -3,12 +3,19 @@
 
 #include "../defines.h"
 #include "../int.h"
-#include "urlParse.h"
-#include "urlParse_testData.h"
 
+/* tests if urlParse works
 
-#include "../tests/testing_funcs.h"
+	out_tests_passed: If not NULL, will be set to the amount of passed tests
+		
+	out_tests_amount: If not NULL, it will be set to the total amount of tests
+		
+	print: if set to true, messages will be printed if tests fail.
 
+	retuns:		true if all tests passed
+				false if any test failed
+
+*/
 bool test_urlParse(uint32* out_tests_passed, uint32* out_tests_amount, bool print) {
 	uint32 i;
 	uint32 passed = 0;
@@ -19,9 +26,8 @@ bool test_urlParse(uint32* out_tests_passed, uint32* out_tests_amount, bool prin
 
 
 	for (i = 0; i < num_parse_URL_Tests;i++) {
+
 		result = parse_URL(testUrls[i]);
-
-
 
 		/* check if NULL,*/
 
