@@ -32,10 +32,10 @@ test: release
 	$(gcc) -O3 $(files_test_stage) -o test.o $(LDFLAGS) $(OSFLAG) 
 
 debug:
-	$(gcc) -g lib.c -c $(LDFLAGS) $(OSFLAG) $(warnings) -o $(output)
+	$(gcc) -g lib.c -c $(LDFLAGS) $(OSFLAG) $(warnings) -o $(output) -D DEBUG
 
 debugtest: debug
-	$(gcc) -g $(files_test_stage) -o test.o $(LDFLAGS) $(OSFLAG) $(warnings)
+	$(gcc) -g $(files_test_stage) -o test.o $(LDFLAGS) $(OSFLAG) $(warnings) -D DEBUG
 
 mini: release
 	$(gcc) -O3 tests/urlcat/main.c $(output) -o urlcat.o $(LDFLAGS) $(OSFLAG)
