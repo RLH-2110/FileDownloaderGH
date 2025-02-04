@@ -1,18 +1,11 @@
-#include "../downloader.h"
-#include "../downloader_internal.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "testdata.h"
-#include "testing_funcs.h"
-
-#include "../urlParse/urlParse_testData.h"
 
 #ifndef NULL
 #define NULL (void*)0
 #endif
-
-#include "testing_funcs.h"
 
 void* malloc_oom(size_t size) {
 	void* p = malloc(size);

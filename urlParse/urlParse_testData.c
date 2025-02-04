@@ -3,7 +3,18 @@
 #include "../defines.h"
 #include "../int.h"
 
+/* "header:" */
+
 #define num_parse_URL_Tests 62
+extern char* testUrls[num_parse_URL_Tests];
+extern char* expectedHostname[num_parse_URL_Tests];
+extern char* expectedProtocol[num_parse_URL_Tests];
+extern char* expectedPath[num_parse_URL_Tests];
+extern uint16 expectedPort[num_parse_URL_Tests];
+
+
+/* code : */
+
 char* testUrls[num_parse_URL_Tests] = {
 	"https://www.github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt", /* 01 */
 	"https://github.com/RLH-2110/FileDownloaderGH/blob/master/sample.txt",

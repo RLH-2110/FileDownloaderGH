@@ -4,7 +4,6 @@
 
 #include "int.h"
 
-#include "downloader_internal.h"
 #include "DNS_offsets.h"
 #include "defines.h"
 
@@ -18,14 +17,22 @@
 #endif
 
 
-
 /*
 
 	This file is mostly for printing and compareing functions
 
 */
 
-char* IPv4ToString(int32 ip){
+
+
+/* turns the ip address to a string.
+	ip: a 32 bit integer holding the ipv4 address
+
+	returns a string formated as a decimal ip using periods as seperator.
+	YOU MUST FREE IT!
+	returns NULL on error
+*/
+static char* IPv4ToString(int32 ip){
 
 	char* str = malloc(4*4); /* 4*4, because it is 4 times maximal 3 digits plus a seperator or NULL*/
 	if (str == NULL)
@@ -34,14 +41,22 @@ char* IPv4ToString(int32 ip){
 	sprintf(str,"%d.%d.%d.%d", (ip & 0xFF000000) >> 24 , (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
 	return str;
 }
-char* IPv4ToStringR(int32 ip){
+/* same as IPv4ToString, but it will reverse the byte order first, so that you can print ip adresses that are in network order*/
+static char* IPv4ToStringR(int32 ip){
 	int32 neoIP;
 
 	neoIP = htonl(ip); /* reverse it */
 	return IPv4ToString(neoIP);
 }
 
-char* debug_get_printable_qname(unsigned char* qname) {
+/* transform a qname to a more printable format for debugging.
+ 
+	WARNING: THIS FUNCTON WILL QUIT THE PROGAMM IN AN OUT OF MEMORY SCENARIO!
+
+	returns the qname, but the length values are written in ascii
+	you are epected to free the pointer!
+*/
+static char* debug_get_printable_qname(unsigned char* qname) {
 
 	char* result;
 	int state = 0;
@@ -99,8 +114,16 @@ char* debug_get_printable_qname(unsigned char* qname) {
 "ID: 65536\nQDCOUNT: 65536\nANCOUNT: 65536\nNSCOUNT: 65536\nARCOUNT: 65536\nFLAGS:\n\tQR: 1\n\tOpcode: 15\n\tAA: 1\n\tTC: 1\n\tRD: 1\n\tRA: 1\n\tZ: 1\n\tRCODE: 15\nQNAME: \nQTYPE: 65536\nQCLASS: QCLASS\n"
 
 
+/* print out the DNS request for debugging.
 
-char* debug_get_printable_DNS_request(unsigned char* request) {
+	WARNING: THIS FUNCTON WILL QUIT THE PROGAMM IN AN OUT OF MEMORY SCENARIO!
+	
+	WARNING: the input must point at a DNS request or NULL. Anything else will cause Undefined behavior which may cause a segfault!
+	
+	returns the qname, but the length values are written in ascii
+	you are expected to free the pointer!
+*/
+static char* debug_get_printable_DNS_request(unsigned char* request) {
 
 	char* result;
 	int request_index;
@@ -171,8 +194,11 @@ char* debug_get_printable_DNS_request(unsigned char* request) {
 }
 
 
-
-int compare_DNS_requests(unsigned char* requestA, unsigned char* requestB) {
+/* compares two DNS requests
+	returns 0 if they are not equal.
+	returns a non zero value if they are the same.
+*/
+static int compare_DNS_requests(unsigned char* requestA, unsigned char* requestB) {
 	int index = 0;
 
 	if (requestA == NULL && requestB == NULL) {

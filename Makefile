@@ -1,6 +1,5 @@
 gcc = gcc -ansi -pedantic -Wall
-files_stage1 = main_*.c helpers.c urlParse/urlParse.c
-files_stage2 = tests/test.c tests/getc.c tests/ipinput.c tests/testing_funcs.c urlParse/urlParse_test.c urlParse/urlParse_testData.c
+files_test_stage = tst.c tests/getc.c tests/ipinput.c
 #ofiles := $(files_stage1:.c=.o)
 ofiles := $(patsubst %.c,%.o,$(notdir $(files_stage1)))
 output = downloader.a
@@ -27,19 +26,16 @@ endif
 
 
 release:
-	$(gcc) -O3 $(files_stage1) -c $(LDFLAGS) $(OSFLAG)
-	ar cr $(output) $(ofiles)
+	$(gcc) -O3 lib.c -c $(LDFLAGS) $(OSFLAG) -o $(output)
 
 test: release
-	$(gcc) -O3 $(files_stage2) $(output) -o test.o $(LDFLAGS) $(OSFLAG)
+	$(gcc) -O3 $(files_test_stage) -o test.o $(LDFLAGS) $(OSFLAG) 
 
 debug:
-	$(gcc) -g $(files_stage1) -c $(LDFLAGS) $(OSFLAG) $(warnings)
-	ar cr $(output) $(ofiles)
-
+	$(gcc) -g lib.c -c $(LDFLAGS) $(OSFLAG) $(warnings) -o $(output)
 
 debugtest: debug
-	$(gcc) -g $(files_stage2) $(output) -o test.o $(LDFLAGS) $(OSFLAG) $(warnings)
+	$(gcc) -g $(files_test_stage) -o test.o $(LDFLAGS) $(OSFLAG) $(warnings)
 
 mini: release
 	$(gcc) -O3 tests/urlcat/main.c $(output) -o urlcat.o $(LDFLAGS) $(OSFLAG)

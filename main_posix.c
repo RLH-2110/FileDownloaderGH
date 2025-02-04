@@ -12,8 +12,6 @@
 
 #include "int.h"
 
-#include "urlParse/urlParse.h"	
-#include "downloader_internal.h"
 #include "downloader.h"
 #include "DNS_offsets.h"
 #include "defines.h"
@@ -38,7 +36,22 @@ void donwloader_cleanup(void) {
 }
 
 
-int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
+
+/*
+	looks up the IPV4 of the provided url, using the list of dns servers.
+
+	url: string of the url to parse. its expected that the url is in a valid format.
+	DNS_LIST: a null terminated list of IPV4 addresses that are DNS servers. the addresses are saved as 32 bit integers
+	log: optional log file. set to NULL if unused, or set it to point to a open stream
+
+	returns: 0 if there was an error, or the IPV4 Address of the answer, if there was one.
+
+	errors:
+		ENOMEM: there was no memory left.
+		EIO: socket or WSAStartup failed
+		EINVAL: invalid arguments passed
+*/
+static int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 
 	char* tmp;
 	uint32 ip;
@@ -178,7 +191,7 @@ int32 DNS_lookup(char* url, int32* DNS_LIST, FILE* log){
 
 }
 
-const char* DOWNLOAD_GET_REQUEST = "GET %s HTTP/1.1\r\n"
+static const char* DOWNLOAD_GET_REQUEST = "GET %s HTTP/1.1\r\n"
              "Host: %s\r\n"
              "Connection: close\r\n"
              "\r\n";
@@ -490,4 +503,4 @@ unsigned char* download_file(char* url, int32* DNS_LIST, uint32* out_fileSize, F
 /* POSIX */
 #endif
 
-typedef int make_iso_compiler_happy;
+typedef int make_iso_compiler_happy_linux;
