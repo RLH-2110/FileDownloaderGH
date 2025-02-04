@@ -5,7 +5,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <ctype.h>
 
 #ifndef defined_parsedUrl
 #define defined_parsedUrl
@@ -62,7 +62,17 @@ static parsedUrl* parse_URL(char* url);
 
 /* Internal stuff from here on out: */
 
+int strncmp_ignore_case(char* str1, char* str2, size_t length) {
 
+	size_t i;
+
+	for (i = 0; i < length; i++) {
+		
+		if (tolower(str1[i]) != tolower(str2[i]))
+			return 1;
+	}
+	return 0;
+}
 
 
 /*
@@ -165,7 +175,8 @@ static parsedUrl* parse_URL(char* url) {
 	else {
 
 		if (tmp == strlen(CONST_HTTPS_STRING)) {
-			if (strncmp(url, CONST_HTTPS_STRING, strlen(CONST_HTTPS_STRING)) == 0) {
+
+			if (strncmp_ignore_case(url, CONST_HTTPS_STRING, strlen(CONST_HTTPS_STRING)) == 0) {
 				protocol = url + 0;
 				protocol_lenght = tmp;
 				i = tmp + strlen("://"); /*set i to first byte of hostname*/

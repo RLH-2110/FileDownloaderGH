@@ -26,9 +26,8 @@ bool test_urlParse(uint32* out_tests_passed, uint32* out_tests_amount, bool prin
 
 
 	for (i = 0; i < num_parse_URL_Tests;i++) {
+
 		result = parse_URL(testUrls[i]);
-
-
 
 		/* check if NULL,*/
 
