@@ -105,6 +105,6 @@ errno will be set to 0 when no errors occurred, Here are possible errno values:
 
 ## Q&A
 
-### Why do it manually and not use a library? 
+### Why do it manually and not use another existing library? 
 
 > Because where is the fun in that?
