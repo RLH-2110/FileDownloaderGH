@@ -41,6 +41,68 @@ The tests include some tests with user input for validation, these are tedious a
 
 you can either use the Linux subsystem for Windows or MinGW, I will add links to both later.
 
+## Usage
+
+### Compile Instructions
+In your c project, include downloader.h and tell your compiler to include downloader.a in your source and object files.  
+Example with the urlcat example program in this repo:  
+
+#### Linux
+```bash
+  gcc tests/urlcat/main.c downloader.a -o urlcat.o  -lssl -lcrypto
+````
+
+#### Windows 
+```bash
+  gcc tests/urlcat/main.c downloader.a -o urlcat.o  -L"C:/Program Files/OpenSSL-Win64/lib/VC/x64/MT" -I"C:/Program Files/OpenSSL-Win64/include" -lssl -lcrypto -lws2_32
+````
+the -L instructions should link to your OpenSSL installation
+
+### Usage in C
+
+In your c project, include downloader.h  
+Before your first call to `download_file()` you will call `downloader_init()` and after your last call to `download_file()` you will call `donwloader_cleanup()`.  
+  
+You will need to create a null terminated list of DNS servers, you can do so like this:  
+```c
+uint32_t DNS_LIST[] = {
+	0x08080808, /* 8.8.8.8 google dns*/
+	0x08080404, /* 8.8.4.4 google dns*/
+	0 /* null termination */
+};
+```
+
+You can then download files into RAM like this:
+
+```c
+	unsigned char* content = NULL;
+	uint32_t filesize = 0;
+	content = download_file("any url that links to raw content", DNS_LIST, &filesize, NULL);
+ ```
+
+Arguments:  
+
+
+| Name         | Type      | Description                                                                                |
+| ------------ | --------- | ------------------------------------------------------------------------------------------ |
+| URL          | char\*    | String of the URL where files will be downloaded from.                                     |
+| DNS_LIST     | int32_t\* | Null terminated list of 32-bit integer that save the IPv4 of DNS Servers                   |
+| out_fileSize | int32_t\* | pointer to an 32-bit integer where the size in bytes of the downloaded file will be stored |
+| log          | FILE\*    | Can be set to NULL, if not NULL, the function will write logging text into the stream      |
+
+> [!NOTE]
+> The url will be valided in the function, so it is safe to pass in invalid urls.
+
+errno will be set to 0 when no errors occurred, Here are possible errno values:
+* EINVAL: invalid parameters
+* EIO: SSL error, socket error, WSA startup error or error while reading the https header
+* EMOMEM: out of memory
+* EHOSTUNREACH: URL could not be resolved with any DNS that was provided
+
+> [!NOTE]
+> Empty files will return with NULL, with errno set to 0.
+
+
 ## Q&A
 
 ### Why do it manually and not use a library? 
