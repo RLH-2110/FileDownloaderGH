@@ -39,7 +39,7 @@ The tests include some tests with user input for validation, these are tedious a
   
 #### Windows
 
-you can either use the Linux subsystem for Windows or MinGW, I will add links to both later.
+You can use MinGW, I will add basic install instructions for it later.
 
 ## Usage
 
