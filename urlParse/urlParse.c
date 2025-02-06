@@ -62,7 +62,7 @@ static parsedUrl* parse_URL(char* url);
 
 /* Internal stuff from here on out: */
 
-int strncmp_ignore_case(char* str1, char* str2, size_t length) {
+static int strncmp_ignore_case(char* str1, char* str2, size_t length) {
 
 	size_t i;
 
