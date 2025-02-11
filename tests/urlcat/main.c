@@ -44,12 +44,13 @@ int main(int argc, char* argv[]){
 		}
 		
 		donwloader_cleanup();
+		free(content);
 		return 0;
 	}
 		
 	printf("file size: %d\n\nFile:\n%s\n",filesize,got(content));
 	
+	free(content);
 	donwloader_cleanup();
-	
 	return 0;
 }
