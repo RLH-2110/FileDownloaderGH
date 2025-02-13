@@ -39,7 +39,25 @@ The tests include some tests with user input for validation, these are tedious a
   
 #### Windows
 
-You can use MinGW, I will add basic install instructions for it later.
+Go to www.msys2.org and download mysys2 and run the installer.  
+  
+run these commands:
+```
+pacman -Syu
+pacman -S make
+pacman -S gcc
+pacman -S git
+git clone https://github.com/RLH-2110/FileDownloaderGH.git
+cd FileDownloaderGH/
+nano Makefile
+```
+adjust these variables:  
+windowsSLLIncludePath  
+windowsSLLLibs  
+
+then use Ctrl+s to save and Ctrl+x to exit.  
+  
+then just run `make`, you can use the Linux instructions for more infos.  
 
 ## Usage
 
