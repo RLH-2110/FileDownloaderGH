@@ -77,7 +77,9 @@ You can then download files into RAM like this:
 ```c
 	unsigned char* content = NULL;
 	uint32_t filesize = 0;
+	downloader_init();
 	content = download_file("any url that links to raw content", DNS_LIST, &filesize, NULL);
+	donwloader_cleanup();
  ```
 
 Arguments:  
