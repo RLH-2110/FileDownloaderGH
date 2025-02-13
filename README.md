@@ -1,5 +1,5 @@
 # FileDownloaderGH
-This is a library able to download files from a URL.  
+This is a library able to download files from a URL of raw file content, like raw.githubusercontent.com links.  
 It has only been tested with files hosted on GitHub, and the project is not entirely done.  
 It's usable right now, but I advise against using it at its current state.
   
@@ -104,6 +104,16 @@ errno will be set to 0 when no errors occurred, Here are possible errno values:
 > [!NOTE]
 > Empty files will return with NULL, with errno set to 0.
 
+> [!NOTE]
+> for testing you can use this known good url: https://raw.githubusercontent.com/RLH-2110/FileDownloaderGH/refs/heads/master/sample.txt
+
+## urlcat
+
+For quick testing of the library, a basic test program was created.  
+If you compile with `make mini`, you will get urlcat.o  
+
+urlcat takes one parameter, which is the URL where you want to download content from, for example: https://raw.githubusercontent.com/RLH-2110/FileDownloaderGH/refs/heads/master/sample.txt  
+with this, you can quickly test if your URL can be downloaded with this tool.
 
 ## Q&A
 
