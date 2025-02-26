@@ -22,7 +22,7 @@ else
 $(info    assuming posix)
 endif
 
-.PHONY: clear clean run skip mini release test debug debugtest
+.PHONY: clear clean run skip mini release test debug debugtest windll_relase windll_debug
 
 
 release:
@@ -45,6 +45,12 @@ run: debugtest
 
 skip: debugtest
 	./test.o skip
+
+
+windll_relase: release
+	$(gcc) -O3 WINDLL-wrapper.c $(output) -o downloader.dll -shared $(LDFLAGS) -D WINDOWS
+windll_debug: debug
+	$(gcc) -g WINDLL-wrapper.c $(output) -o downloader.dll $(warnings) -shared $(LDFLAGS) -D WINDOWS
 
 clear: clean
 clean:
