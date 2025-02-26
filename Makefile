@@ -59,4 +59,5 @@ clean:
 	rm -f $(ofiles)
 	rm -f ./resp.txt
 	rm -f ./log.txt
+	rm -f downloader.dll
 	
