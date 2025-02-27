@@ -133,6 +133,16 @@ If you compile with `make mini`, you will get urlcat.o
 urlcat takes one parameter, which is the URL where you want to download content from, for example: https://raw.githubusercontent.com/RLH-2110/FileDownloaderGH/refs/heads/master/sample.txt  
 with this, you can quickly test if your URL can be downloaded with this tool.
 
+## Windows DLL
+
+For one of my own use cases, I needed the library as a Windows DLL instead of a static library, for this case, I have created WINDLL-wrapper.c  
+`download_file()`, `downloader_init()` and `donwloader_cleanup()` have been renamed to `download_file_d()`, `downloader_init_d()` and `donwloader_cleanup_d()`, but they have the same function signature as documented above.  
+
+### make targets
+
+`windll_relase` builds an DLL with O3 and no debugging symbols  
+`windll_debug` builds an DLL with debuting symbols  
+
 ## Q&A
 
 ### Why do it manually and not use another existing library? 
