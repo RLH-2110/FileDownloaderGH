@@ -138,9 +138,11 @@ with this, you can quickly test if your URL can be downloaded with this tool.
 For one of my own use cases, I needed the library as a Windows DLL instead of a static library, for this case, I have created WINDLL-wrapper.c  
 `download_file()`, `downloader_init()` and `donwloader_cleanup()` have been renamed to `download_file_d()`, `downloader_init_d()` and `donwloader_cleanup_d()`, but they have the same function signature as documented above.  
 
+A new function called `free_d()` was added, so you can free the memory from `download_file_d` in c#. The function signature of `free_d()` is the same as `free()`  
+
 ### make targets
 
-`windll_relase` builds an DLL with O3 and no debugging symbols  
+`windll_release` builds an DLL with O3 and no debugging symbols  
 `windll_debug` builds an DLL with debuting symbols  
 
 ## Q&A
