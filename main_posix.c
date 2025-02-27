@@ -237,9 +237,12 @@ unsigned char* download_file(char* url, int32* DNS_LIST, uint32* out_fileSize, F
 		return NULL;
 	}
 
+	printflog("url: %s\n",url);
+
 	p_url = parse_URL(url);
 	if (p_url == NULL) {
 		errno = EINVAL;
+		putslog("The url is invalid!");
 		return NULL; /* invalid url provided! */
 	}
 
