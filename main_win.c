@@ -76,10 +76,13 @@
 		    return 0;
 		}
 
+		printflog("url: %s\n",url);
+
 		p_url = parse_URL(url);
 		if (p_url == NULL) {
 			errno = EINVAL;
-			return 0; /* invalid url provided! */
+			putslog("The url is invalid!");
+			return NULL; /* invalid url provided! */
 		}
 
 		for(DNSindex = 0;;DNSindex++){
