@@ -24,6 +24,6 @@ __declspec(dllexport) unsigned char* __cdecl download_file_d(char* url, int32* D
 	return download_file(url,DNS_LIST,out_fileSize,log);
 }
 
-__declspec(dllexport) unsigned void __cdecl free_d(void* ptr){ /* for c#, since I need to free the memory of download_file_d*/
+__declspec(dllexport) void __cdecl free_d(void* ptr){ /* for c#, since I need to free the memory of download_file_d*/
 	free(ptr);
 }

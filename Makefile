@@ -47,7 +47,7 @@ skip: debugtest
 	./test.o skip
 
 
-windll_relase: release
+windll_release: release
 	$(gcc) -O3 WINDLL-wrapper.c $(output) -o downloader.dll -shared $(LDFLAGS) -D WINDOWS
 windll_debug: debug
 	$(gcc) -g WINDLL-wrapper.c $(output) -o downloader.dll $(warnings) -shared $(LDFLAGS) -D WINDOWS
