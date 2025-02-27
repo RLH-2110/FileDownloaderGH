@@ -23,3 +23,7 @@ __declspec(dllexport) void __cdecl donwloader_cleanup_d(void){
 __declspec(dllexport) unsigned char* __cdecl download_file_d(char* url, int32* DNS_LIST, uint32* out_fileSize, FILE* log){
 	return download_file(url,DNS_LIST,out_fileSize,log);
 }
+
+__declspec(dllexport) unsigned void __cdecl free_d(void* ptr){ /* for c#, since I need to free the memory of download_file_d*/
+	free(ptr);
+}
