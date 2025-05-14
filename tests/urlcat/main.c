@@ -2,6 +2,7 @@
 #include "../../int.h"
 #include <stdio.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #ifndef NULL
 #define NULL (void*)0
