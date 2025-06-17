@@ -1,5 +1,6 @@
 token.txt
 *.o
+urlcat
 *.a
 log.txt
 resp.txt

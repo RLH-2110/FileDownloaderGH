@@ -4,7 +4,6 @@ files_test_stage = tst.c tests/getc.c tests/ipinput.c
 ofiles := $(patsubst %.c,%.o,$(notdir $(files_stage1)))
 output = downloader.a
 cleanup = test.o log.txt urlcat.o
-ldflags =
 warnings = -Wno-long-long
 
 # for windows only
@@ -14,15 +13,15 @@ windowsSLLLibs = "C:/Program Files/OpenSSL-Win64/lib/VC/x64/MT"
 # OS FLAGS
 ifeq ($(OS),Windows_NT)
     OSFLAG = -D WINDOWS
-	LDFLAGS = -lws2_32 -L$(windowsSLLLibs) -I$(windowsSLLIncludePath) -lssl -lcrypto
+	LDFLAGS += -lws2_32 -L$(windowsSLLLibs) -I$(windowsSLLIncludePath) -lssl -lcrypto
 $(info    detected windows)
 else
 	OSFLAG = -D POSIX
-	LDFLAGS = -lssl -lcrypto 
+	LDFLAGS += -lssl -lcrypto 
 $(info    assuming posix)
 endif
 
-.PHONY: clear clean run skip mini release test debug debugtest windll_relase windll_debug
+.PHONY: clear clean run skip mini release test debug debugtest windll_relase windll_debug bitbake_release bitbake_mini
 
 
 release:
@@ -39,6 +38,12 @@ debugtest: debug
 
 mini: release
 	$(gcc) -O3 tests/urlcat/main.c $(output) -o urlcat.o $(LDFLAGS) $(OSFLAG)
+
+bitbake_release:
+	$(CC) -O3 lib.c -c $(LDFLAGS) $(CFLAGS) $(OSFLAG) -o $(output)
+
+bitbake_mini: bitbake_release
+	$(CC) -O3 tests/urlcat/main.c $(output) -o urlcat $(LDFLAGS) $(CFLAGS) $(OSFLAG)
 
 run: debugtest
 	./test.o
